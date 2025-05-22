@@ -8,18 +8,30 @@ import {
   Badge,
   Breadcrumbs,
   Link as MuiLink,
+  Menu,
+  MenuItem,
 } from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
-import AccountCircle from "@mui/icons-material/AccountCircle";
-import MailIcon from "@mui/icons-material/Mail";
-import NotificationsIcon from "@mui/icons-material/Notifications";
-import MoreIcon from "@mui/icons-material/MoreVert";
+import {
+  Menu as MenuIcon,
+  AccountCircle,
+  Mail as MailIcon,
+  Notifications as NotificationsIcon,
+  MoreVert as MoreIcon,
+  AddCircle as AddCircleIcon,
+} from "@mui/icons-material";
 import { useLocation, Link as RouterLink } from "react-router-dom";
+import { useTheme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import AddIcon from "@mui/icons-material/Add";
 import textColor from "../../components/common/CreateTheme";
+import JoinClassDialog from "../class/JoinClassForm";
+import CreateClassDialog from "../class/CreateClassForm";
 
 interface HeaderProps {
   toggleSidebar: () => void;
 }
+
+type DialogType = "join" | "create" | null;
 
 const breadcrumbNameMap: Record<string, string> = {
   dashboard: "Dashboard",
@@ -28,16 +40,22 @@ const breadcrumbNameMap: Record<string, string> = {
   inbox: "Inbox",
   login: "Sign In",
   signup: "Sign Up",
-  // Add more routes and friendly names as needed
 };
 
 const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   const location = useLocation();
+  const theme = useTheme();
+  const fullScreen = useMediaQuery(theme.breakpoints.down("md"));
 
-  // Split path into segments, ignoring empty strings
   const pathnames = location.pathname.split("/").filter((x) => x);
 
-  // Build dynamic breadcrumbs starting from first segment (exclude "ALPHA")
+  const [menuAnchorEl, setMenuAnchorEl] = React.useState<null | HTMLElement>(
+    null,
+  );
+  const [mobileMenuAnchorEl, setMobileMenuAnchorEl] =
+    React.useState<null | HTMLElement>(null);
+  const [dialogType, setDialogType] = React.useState<DialogType>(null);
+
   const breadcrumbs = pathnames.length ? (
     <Breadcrumbs
       separator=" > "
@@ -48,7 +66,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
         overflow: "hidden",
         color: textColor,
         "& .MuiBreadcrumbs-separator": {
-          color: textColor, // match separator color to header text color
+          color: textColor,
           userSelect: "none",
         },
       }}
@@ -78,23 +96,29 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     </Breadcrumbs>
   ) : null;
 
-  // Menu handlers (placeholders, implement as needed)
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const [mobileMoreAnchorEl, setMobileMoreAnchorEl] =
-    React.useState<null | HTMLElement>(null);
-
-  const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
+  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+    setMenuAnchorEl(event.currentTarget);
   };
 
-  const handleMobileMenuClose = () => setMobileMoreAnchorEl(null);
   const handleMenuClose = () => {
-    setAnchorEl(null);
-    handleMobileMenuClose();
+    setMenuAnchorEl(null);
+  };
+
+  const handleDialogOpen = (type: DialogType) => {
+    setDialogType(type);
+    handleMenuClose();
+  };
+
+  const handleDialogClose = () => {
+    setDialogType(null);
   };
 
   const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setMobileMoreAnchorEl(event.currentTarget);
+    setMobileMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleMobileMenuClose = () => {
+    setMobileMenuAnchorEl(null);
   };
 
   return (
@@ -121,7 +145,6 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
             <MenuIcon />
           </IconButton>
 
-          {/* Fixed ALPHA title */}
           <Typography
             variant="h6"
             noWrap
@@ -130,23 +153,40 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
           >
             ALPHA
           </Typography>
+
           {breadcrumbs}
 
-          {/* Spacer to push icons right */}
           <Box sx={{ flexGrow: 1 }} />
 
-          {/* Right side icons */}
           <Box sx={{ display: { xs: "none", md: "flex" } }}>
-            <IconButton size="large" color="inherit" aria-label="show mails">
+            <IconButton
+              size="large"
+              color="inherit"
+              aria-label="menu"
+              onClick={handleMenuClick}
+            >
+              <AddIcon />
+            </IconButton>
+            <Menu
+              anchorEl={menuAnchorEl}
+              open={Boolean(menuAnchorEl)}
+              onClose={handleMenuClose}
+              PaperProps={{ style: { width: 200 } }}
+            >
+              <MenuItem onClick={() => handleDialogOpen("join")}>
+                Join a Class
+              </MenuItem>
+              <MenuItem onClick={() => handleDialogOpen("create")}>
+                Create a New Class
+              </MenuItem>
+            </Menu>
+
+            <IconButton size="large" color="inherit" aria-label="mails">
               <Badge badgeContent={4} color="error">
                 <MailIcon />
               </Badge>
             </IconButton>
-            <IconButton
-              size="large"
-              color="inherit"
-              aria-label="show notifications"
-            >
+            <IconButton size="large" color="inherit" aria-label="notifications">
               <Badge badgeContent={17} color="error">
                 <NotificationsIcon />
               </Badge>
@@ -154,11 +194,8 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
             <IconButton
               size="large"
               edge="end"
-              onClick={handleProfileMenuOpen}
               color="inherit"
-              aria-label="account of current user"
-              aria-controls="primary-search-account-menu"
-              aria-haspopup="true"
+              aria-label="account"
             >
               <AccountCircle />
             </IconButton>
@@ -170,7 +207,6 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
               onClick={handleMobileMenuOpen}
               color="inherit"
               aria-label="show more"
-              aria-controls="primary-search-account-menu-mobile"
               aria-haspopup="true"
             >
               <MoreIcon />
@@ -178,6 +214,16 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
           </Box>
         </Toolbar>
       </AppBar>
+
+      {/* Dialog Components */}
+      <JoinClassDialog
+        open={dialogType === "join"}
+        onClose={handleDialogClose}
+      />
+      <CreateClassDialog
+        open={dialogType === "create"}
+        onClose={handleDialogClose}
+      />
     </Box>
   );
 };

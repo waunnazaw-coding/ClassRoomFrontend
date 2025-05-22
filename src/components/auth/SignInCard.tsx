@@ -1,4 +1,6 @@
 import * as React from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import MuiCard from "@mui/material/Card";
@@ -6,11 +8,12 @@ import Checkbox from "@mui/material/Checkbox";
 import FormLabel from "@mui/material/FormLabel";
 import FormControl from "@mui/material/FormControl";
 import FormControlLabel from "@mui/material/FormControlLabel";
-import Link from "@mui/material/Link";
+import { Link } from "react-router-dom";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
 import ForgotPassword from "./ForgotPassword";
+import { authService } from "../../services/auth"; // adjust path
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: "flex",
@@ -31,137 +34,167 @@ const Card = styled(MuiCard)(({ theme }) => ({
 }));
 
 export default function SignInCard() {
-  const [emailError, setEmailError] = React.useState(false);
-  const [emailErrorMessage, setEmailErrorMessage] = React.useState("");
-  const [passwordError, setPasswordError] = React.useState(false);
-  const [passwordErrorMessage, setPasswordErrorMessage] = React.useState("");
+  const navigate = useNavigate();
+
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [rememberMe, setRememberMe] = React.useState(false);
+
+  const [errors, setErrors] = React.useState<{ [key: string]: string }>({});
+  const [loading, setLoading] = React.useState(false);
+  const [serverError, setServerError] = React.useState("");
   const [open, setOpen] = React.useState(false);
 
-  const handleClickOpen = () => {
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-  };
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    if (emailError || passwordError) {
-      event.preventDefault();
-      return;
-    }
-    const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get("email"),
-      password: data.get("password"),
-    });
-  };
+  const handleClickOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
 
   const validateInputs = () => {
-    const email = document.getElementById("email") as HTMLInputElement;
-    const password = document.getElementById("password") as HTMLInputElement;
+    const newErrors: { [key: string]: string } = {};
 
-    let isValid = true;
+    if (!email.trim()) newErrors.email = "Email is required.";
+    else if (!/\S+@\S+\.\S+/.test(email))
+      newErrors.email = "Please enter a valid email address.";
 
-    if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
-      setEmailError(true);
-      setEmailErrorMessage("Please enter a valid email address.");
-      isValid = false;
-    } else {
-      setEmailError(false);
-      setEmailErrorMessage("");
+    if (!password) newErrors.password = "Password is required.";
+    else if (password.length < 6)
+      newErrors.password = "Password must be at least 6 characters long.";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setServerError("");
+    if (!validateInputs()) return;
+
+    setLoading(true);
+    try {
+      const authResponse = await authService.login({
+        email,
+        password,
+        rememberMe,
+      });
+      localStorage.setItem("authToken", authResponse.accessToken);
+      toast.success("Login successful!");
+      // Navigate after a short delay to allow toast to show
+      setTimeout(() => {
+        navigate("/");
+      });
+    } catch (err: any) {
+      setServerError(err?.response?.data?.message || "Login failed.");
+      toast.error(serverError || "Login failed.");
+    } finally {
+      setLoading(false);
     }
-
-    if (!password.value || password.value.length < 6) {
-      setPasswordError(true);
-      setPasswordErrorMessage("Password must be at least 6 characters long.");
-      isValid = false;
-    } else {
-      setPasswordError(false);
-      setPasswordErrorMessage("");
-    }
-
-    return isValid;
   };
 
   return (
-    <Card variant="outlined">
-      <Box sx={{ display: { xs: "flex", md: "none" } }}>
-        {/* <SitemarkIcon /> */}
-      </Box>
+    <Card variant="outlined" aria-label="Sign in form">
       <Typography
         component="h1"
         variant="h4"
         sx={{ width: "100%", fontSize: "clamp(2rem, 10vw, 2.15rem)" }}
       >
-        Sign in
+        Sign In
       </Typography>
       <Box
         component="form"
         onSubmit={handleSubmit}
         noValidate
-        sx={{ display: "flex", flexDirection: "column", width: "100%", gap: 2 }}
+        sx={{ display: "flex", flexDirection: "column", gap: 2 }}
       >
-        <FormControl>
+        <FormControl fullWidth>
           <FormLabel htmlFor="email">Email</FormLabel>
           <TextField
-            error={emailError}
-            helperText={emailErrorMessage}
             id="email"
-            type="email"
             name="email"
+            type="email"
             placeholder="your@email.com"
-            autoComplete="email"
-            autoFocus
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            error={Boolean(errors.email)}
+            helperText={errors.email}
             required
-            fullWidth
+            autoComplete="email"
             variant="outlined"
-            color={emailError ? "error" : "primary"}
+            size="small"
           />
         </FormControl>
-        <FormControl>
-          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+
+        <FormControl fullWidth>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <FormLabel htmlFor="password">Password</FormLabel>
-            <Link
-              component="button"
+            <Button
               type="button"
               onClick={handleClickOpen}
-              variant="body2"
-              sx={{ alignSelf: "baseline" }}
+              variant="text"
+              sx={{
+                fontWeight: "medium",
+                textTransform: "none",
+                padding: 0,
+                minWidth: "unset",
+              }}
             >
               Forgot your password?
-            </Link>
+            </Button>
           </Box>
           <TextField
-            error={passwordError}
-            helperText={passwordErrorMessage}
-            name="password"
-            placeholder="••••••"
-            type="password"
             id="password"
-            autoComplete="current-password"
-            autoFocus
+            name="password"
+            type="password"
+            placeholder="••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            error={Boolean(errors.password)}
+            helperText={errors.password}
             required
-            fullWidth
+            autoComplete="current-password"
             variant="outlined"
-            color={passwordError ? "error" : "primary"}
+            size="small"
           />
         </FormControl>
+
         <FormControlLabel
-          control={<Checkbox value="remember" color="primary" />}
+          control={
+            <Checkbox
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              color="primary"
+            />
+          }
           label="Remember me"
         />
+
+        {serverError && (
+          <Typography color="error" variant="body2" textAlign="center">
+            {serverError}
+          </Typography>
+        )}
+
         <ForgotPassword open={open} handleClose={handleClose} />
+
         <Button
           type="submit"
           fullWidth
           variant="contained"
-          onClick={validateInputs}
+          disabled={loading}
+          sx={{ fontWeight: "bold" }}
         >
-          Sign in
+          {loading ? "Signing In..." : "Sign In"}
         </Button>
+
         <Typography sx={{ textAlign: "center" }}>
-          Don&apos;t have an account? <span></span>
+          Don&apos;t have an account?{" "}
+          <Typography component={Link} to="/signup" variant="body2">
+            Sign Up
+          </Typography>
         </Typography>
       </Box>
     </Card>

@@ -47,13 +47,13 @@ const Sidebar: React.FC<SidebarProps> = ({ open }) => {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       sx={{
-        width: isSidebarOpen ? 240 : 60,
+        width: isSidebarOpen ? 280 : 60,
         flexShrink: 0,
         whiteSpace: "nowrap",
         boxShadow: 1,
         transition: "width 0.3s",
         "& .MuiDrawer-paper": {
-          width: isSidebarOpen ? 240 : 60,
+          width: isSidebarOpen ? 280 : 60,
           boxSizing: "border-box",
           overflowX: "hidden",
           transition: "width 0.5s",

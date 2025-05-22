@@ -1,5 +1,4 @@
-import * as React from "react";
-import CssBaseline from "@mui/material/CssBaseline";
+
 import Stack from "@mui/material/Stack";
 import SignInCard from "../../components/auth/SignInCard";
 import Content from "../../components/auth/Content";

@@ -1,37 +1,8 @@
-import React from "react";
 import Stack from "@mui/material/Stack";
 import SignUpCard from "../../components/auth/SignUpCard";
 import Content from "../../components/auth/Content";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 
-const schema = z
-  .object({
-    userName: z.string().min(1, "User Name is required"),
-    email: z.string().email("Invalid email address"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    confirmPassword: z
-      .string()
-      .min(6, "Password must be at least 6 characters"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
-
-export default function SignUp(props: { disableCustomTheme?: boolean }) {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({
-    resolver: zodResolver(schema),
-  });
-
-  type SignUpFormData = z.infer<typeof schema>;
-  const onSubmit = (data: SignUpFormData) => console.log(data);
-
+export default function SignIn(props: { disableCustomTheme?: boolean }) {
   return (
     <Stack
       direction="column"
@@ -62,8 +33,6 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
       ]}
     >
       <Stack
-        component="form"
-        onSubmit={handleSubmit(onSubmit)}
         direction={{ xs: "column-reverse", md: "row" }}
         sx={{
           justifyContent: "center",

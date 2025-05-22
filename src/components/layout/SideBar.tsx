@@ -18,6 +18,7 @@ import {
 import {
   Box,
   Collapse,
+  Divider,
   Drawer,
   List,
   ListItemButton,
@@ -144,6 +145,8 @@ const Sidebar: React.FC<SidebarProps> = ({ open }) => {
             </List>
           </Collapse>
 
+          <Divider sx={{ my: 1 }} />
+
           {/* Enrolled - collapsible */}
           <Tooltip title={!isSidebarOpen ? "Enrolled" : ""} placement="right">
             <ListItemButton
@@ -191,6 +194,8 @@ const Sidebar: React.FC<SidebarProps> = ({ open }) => {
             </List>
           </Collapse>
 
+          <Divider sx={{ my: 1 }} />
+
           {/* Inbox */}
           <Tooltip title={!isSidebarOpen ? "Inbox" : ""} placement="right">
             <ListItemButton
@@ -218,6 +223,8 @@ const Sidebar: React.FC<SidebarProps> = ({ open }) => {
               {isSidebarOpen && <ListItemText primary="Archived" />}
             </ListItemButton>
           </Tooltip>
+
+          <Divider sx={{ my: 1 }} />
 
           {/* Sign In */}
           <Tooltip title={!isSidebarOpen ? "Sign In" : ""} placement="right">

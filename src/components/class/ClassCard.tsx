@@ -54,7 +54,7 @@ function SelectActionCard() {
         width: "100%",
         display: "grid",
         gridTemplateColumns: "repeat(auto-fill, minmax(min(250px, 100%), 1fr))",
-        gap: 2.5,
+        gap: 2.8,
       }}
     >
       {(loading ? Array.from(new Array(4)) : cards).map((card, index) =>

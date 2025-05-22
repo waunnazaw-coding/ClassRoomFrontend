@@ -46,7 +46,6 @@ export default function RootLayout() {
             pt: "64px",
             minHeight: "100vh",
             overflowX: "hidden",
-            // px: { xs: 2, sm: 3 },
             transition: "margin-left 0.3s",
           }}
           aria-label="main content"

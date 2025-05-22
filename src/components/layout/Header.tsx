@@ -151,7 +151,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
             component="div"
             sx={{ mr: 2, fontWeight: "bold", color: textColor }}
           >
-            ALPHA
+            FRANCO
           </Typography>
 
           {breadcrumbs}

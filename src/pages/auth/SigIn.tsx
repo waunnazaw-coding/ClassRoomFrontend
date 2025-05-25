@@ -1,4 +1,4 @@
-
+import React from "react";
 import Stack from "@mui/material/Stack";
 import SignInCard from "../../components/auth/SignInCard";
 import Content from "../../components/auth/Content";
@@ -6,14 +6,16 @@ import Content from "../../components/auth/Content";
 export default function SignIn(props: { disableCustomTheme?: boolean }) {
   return (
     <Stack
-      direction="column"
       component="main"
+      direction="column"
       sx={[
         {
           justifyContent: "center",
           height: "calc((1 - var(--template-frame-height, 0)) * 100%)",
           marginTop: "max(40px - var(--template-frame-height, 0px), 0px)",
           minHeight: "100%",
+          position: "relative", // Needed for ::before positioning
+          overflow: "hidden", // Prevent scrollbars from background pseudo-element
         },
         (theme) => ({
           "&::before": {
@@ -33,6 +35,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
         }),
       ]}
     >
+      {/* Outer container for responsive layout */}
       <Stack
         direction={{ xs: "column-reverse", md: "row" }}
         sx={{
@@ -40,8 +43,11 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
           gap: { xs: 6, sm: 12 },
           p: 2,
           mx: "auto",
+          width: "100%",
+          maxWidth: 1200, // Optional max width for large screens
         }}
       >
+        {/* Inner container for Content and SignInCard */}
         <Stack
           direction={{ xs: "column-reverse", md: "row" }}
           sx={{
@@ -49,6 +55,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
             gap: { xs: 6, sm: 12 },
             p: { xs: 2, sm: 4 },
             m: "auto",
+            width: "100%",
           }}
         >
           <Content />

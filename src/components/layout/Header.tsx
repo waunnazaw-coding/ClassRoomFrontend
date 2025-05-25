@@ -10,6 +10,7 @@ import {
   Link as MuiLink,
   Menu,
   MenuItem,
+  Button,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
@@ -17,15 +18,17 @@ import {
   Mail as MailIcon,
   Notifications as NotificationsIcon,
   MoreVert as MoreIcon,
-  AddCircle as AddCircleIcon,
+  Add as AddIcon,
+  Login as LoginIcon,
+  PersonAdd as PersonAddIcon,
 } from "@mui/icons-material";
 import { useLocation, Link as RouterLink } from "react-router-dom";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import AddIcon from "@mui/icons-material/Add";
 import textColor from "../../components/common/CreateTheme";
 import JoinClassDialog from "../class/JoinClassForm";
 import CreateClassDialog from "../class/CreateClassForm";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface HeaderProps {
   toggleSidebar: () => void;
@@ -49,13 +52,20 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
   const pathnames = location.pathname.split("/").filter((x) => x);
 
-  const [menuAnchorEl, setMenuAnchorEl] = React.useState<null | HTMLElement>(
-    null,
-  );
+  const { isAuthenticated, user, logout } = useAuth();
+
+  const [addMenuAnchorEl, setAddMenuAnchorEl] =
+    React.useState<null | HTMLElement>(null);
+  const [accountMenuAnchorEl, setAccountMenuAnchorEl] =
+    React.useState<null | HTMLElement>(null);
   const [mobileMenuAnchorEl, setMobileMenuAnchorEl] =
     React.useState<null | HTMLElement>(null);
   const [dialogType, setDialogType] = React.useState<DialogType>(null);
 
+  const isAddMenuOpen = Boolean(addMenuAnchorEl);
+  const isAccountMenuOpen = Boolean(accountMenuAnchorEl);
+
+  // Breadcrumbs component
   const breadcrumbs = pathnames.length ? (
     <Breadcrumbs
       separator=" > "
@@ -96,21 +106,21 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     </Breadcrumbs>
   ) : null;
 
-  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
-    setMenuAnchorEl(event.currentTarget);
+  // Handlers
+  const handleAddMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAddMenuAnchorEl(event.currentTarget);
   };
 
-  const handleMenuClose = () => {
-    setMenuAnchorEl(null);
+  const handleAddMenuClose = () => {
+    setAddMenuAnchorEl(null);
   };
 
-  const handleDialogOpen = (type: DialogType) => {
-    setDialogType(type);
-    handleMenuClose();
+  const handleAccountMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAccountMenuAnchorEl(event.currentTarget);
   };
 
-  const handleDialogClose = () => {
-    setDialogType(null);
+  const handleAccountMenuClose = () => {
+    setAccountMenuAnchorEl(null);
   };
 
   const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -119,6 +129,20 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
   const handleMobileMenuClose = () => {
     setMobileMenuAnchorEl(null);
+  };
+
+  const handleDialogOpen = (type: DialogType) => {
+    setDialogType(type);
+    handleAddMenuClose();
+  };
+
+  const handleDialogClose = () => {
+    setDialogType(null);
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    handleAccountMenuClose();
   };
 
   return (
@@ -134,6 +158,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
         }}
       >
         <Toolbar>
+          {/* Sidebar toggle */}
           <IconButton
             size="large"
             edge="start"
@@ -145,6 +170,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
             <MenuIcon />
           </IconButton>
 
+          {/* Brand */}
           <Typography
             variant="h6"
             noWrap
@@ -154,53 +180,131 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
             FRANCO
           </Typography>
 
+          {/* Breadcrumbs */}
           {breadcrumbs}
 
           <Box sx={{ flexGrow: 1 }} />
 
-          <Box sx={{ display: { xs: "none", md: "flex" } }}>
-            <IconButton
-              size="large"
-              color="inherit"
-              aria-label="menu"
-              onClick={handleMenuClick}
-            >
-              <AddIcon />
-            </IconButton>
-            <Menu
-              anchorEl={menuAnchorEl}
-              open={Boolean(menuAnchorEl)}
-              onClose={handleMenuClose}
-              PaperProps={{ style: { width: 200 } }}
-            >
-              <MenuItem onClick={() => handleDialogOpen("join")}>
-                Join a Class
-              </MenuItem>
-              <MenuItem onClick={() => handleDialogOpen("create")}>
-                Create a New Class
-              </MenuItem>
-            </Menu>
+          {/* Desktop Icons */}
+          <Box
+            sx={{ display: { xs: "none", md: "flex" }, alignItems: "center" }}
+          >
+            {isAuthenticated ? (
+              <>
+                {/* Add menu */}
+                <IconButton
+                  size="large"
+                  color="inherit"
+                  aria-label="add"
+                  onClick={handleAddMenuClick}
+                >
+                  <AddIcon />
+                </IconButton>
+                <Menu
+                  anchorEl={addMenuAnchorEl}
+                  open={isAddMenuOpen}
+                  onClose={handleAddMenuClose}
+                  PaperProps={{ style: { width: 200 } }}
+                >
+                  <MenuItem onClick={() => handleDialogOpen("join")}>
+                    Join a Class
+                  </MenuItem>
+                  <MenuItem onClick={() => handleDialogOpen("create")}>
+                    Create a New Class
+                  </MenuItem>
+                </Menu>
 
-            <IconButton size="large" color="inherit" aria-label="mails">
-              <Badge badgeContent={4} color="error">
-                <MailIcon />
-              </Badge>
-            </IconButton>
-            <IconButton size="large" color="inherit" aria-label="notifications">
-              <Badge badgeContent={17} color="error">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
-            <IconButton
-              size="large"
-              edge="end"
-              color="inherit"
-              aria-label="account"
-            >
-              <AccountCircle />
-            </IconButton>
+                {/* Mail */}
+                <IconButton size="large" color="inherit" aria-label="mail">
+                  <Badge badgeContent={4} color="error">
+                    <MailIcon />
+                  </Badge>
+                </IconButton>
+
+                {/* Notifications */}
+                <IconButton
+                  size="large"
+                  color="inherit"
+                  aria-label="notifications"
+                >
+                  <Badge badgeContent={17} color="error">
+                    <NotificationsIcon />
+                  </Badge>
+                </IconButton>
+
+                {/* Account */}
+                <IconButton
+                  size="large"
+                  edge="end"
+                  color="inherit"
+                  aria-label="account of current user"
+                  aria-haspopup="true"
+                  onClick={handleAccountMenuClick}
+                >
+                  <AccountCircle />
+                </IconButton>
+                <Menu
+                  anchorEl={accountMenuAnchorEl}
+                  open={isAccountMenuOpen}
+                  onClose={handleAccountMenuClose}
+                >
+                  <MenuItem disabled>{user?.username || "User"}</MenuItem>
+                  <MenuItem onClick={handleLogout}>Logout</MenuItem>
+                </Menu>
+              </>
+            ) : (
+              <>
+                <Button
+                  component={RouterLink}
+                  to="/login"
+                  variant="outlined"
+                  color="primary"
+                  startIcon={<LoginIcon />}
+                  sx={{
+                    textTransform: "none",
+                    mr: 1,
+                    borderRadius: 2,
+                    fontWeight: 600,
+                    paddingX: 2,
+                    color: textColor,
+                    paddingY: 1,
+                    minWidth: 100,
+                    "&:hover": {
+                      backgroundColor: "primary.light",
+                      borderColor: "primary.main",
+                      color: textColor,
+                    },
+                  }}
+                >
+                  Sign In
+                </Button>
+                <Button
+                  component={RouterLink}
+                  to="/signup"
+                  variant="contained"
+                  color="primary"
+                  startIcon={<PersonAddIcon />}
+                  sx={{
+                    textTransform: "none",
+                    borderRadius: 2,
+                    fontWeight: 600,
+                    paddingX: 2,
+                    paddingY: 1,
+                    minWidth: 100,
+                    boxShadow: "0 4px 10px rgb(25 118 210 / 0.4)",
+                    "&:hover": {
+                      backgroundColor: "primary.dark",
+                      boxShadow: "0 6px 14px rgb(25 118 210 / 0.6)",
+                    },
+                  }}
+                >
+                  Sign Up
+                </Button>
+              </>
+            )}
           </Box>
 
+          {/* Mobile Menu Icon */}
           <Box sx={{ display: { xs: "flex", md: "none" } }}>
             <IconButton
               size="large"

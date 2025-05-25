@@ -1,11 +1,28 @@
-import { createBrowserRouter } from "react-router-dom";
-import React, { Suspense, lazy } from "react";
+import React, { Suspense, lazy, ReactNode } from "react";
+import { createBrowserRouter, Navigate } from "react-router-dom";
+import { CircularProgress, Box } from "@mui/material";
+import PrivateRoute from "../components/auth/PrivateRoute"; // adjust path
 
-// Lazy load all page components
+const LoadingFallback = () => (
+  <Box
+    sx={{
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      height: "100vh",
+    }}
+  >
+    <CircularProgress size={60} color="primary" />
+  </Box>
+);
+
+const withSuspense = (element: ReactNode) => (
+  <Suspense fallback={<LoadingFallback />}>{element}</Suspense>
+);
+
 const RootLayoutPage = lazy(() => import("../pages/RootLayout"));
 const HomePage = lazy(() => import("../pages/Home"));
 const ErrorPage = lazy(() => import("../pages/Error"));
-// const CalendarPage = lazy(() => import("../pages/calendar/Calendar"));
 const ToDoPage = lazy(() => import("../pages/classes/ToDo"));
 const ArchievedPage = lazy(() => import("../pages/archived/ArchivedClass"));
 const ClassRootLayout = lazy(() => import("../pages/classes/ClassRootLayout"));
@@ -20,12 +37,8 @@ const InboxPage = lazy(() => import("../pages/inbox/Inbox"));
 const LoginPage = lazy(() => import("../pages/auth/SigIn"));
 const SignUpPage = lazy(() => import("../pages/auth/SignUp"));
 
-// Helper function to wrap elements in Suspense
-const withSuspense = (element: React.ReactNode) => (
-  <Suspense fallback={<div>Loading...</div>}>{element}</Suspense>
-);
-
 const router = createBrowserRouter([
+  // Root layout with public home page and error page
   {
     path: "/",
     element: withSuspense(<RootLayoutPage />),
@@ -35,63 +48,81 @@ const router = createBrowserRouter([
         index: true,
         element: withSuspense(<HomePage />),
       },
-      {
-        path: "classes",
-        element: withSuspense(<ClassRootLayout />),
-        children: [
-          {
-            index: true,
-            element: withSuspense(<ClassPage />),
-          },
-          {
-            path: ":classId",
-            element: withSuspense(<ClassDetailPage />),
-            children: [
-              {
-                path: "assignment/:assignmentId",
-                element: withSuspense(<AssignmentDetail />),
-              },
-              {
-                path: "material/:materialId",
-                element: withSuspense(<AssignmentDetail />),
-              },
-            ],
-          },
-        ],
-      },
-      {
-        path: "todo",
-        element: withSuspense(<ToDoPage />),
-      },
-      {
-        path: "review",
-        element: withSuspense(<ReviewPage />),
-      },
-      // {
-      //   path: "calendar",
-      //   element: withSuspense(<CalendarPage />),
-      // },
-      {
-        path: "notification",
-        element: withSuspense(<NotificationPage />),
-      },
-      {
-        path: "archived",
-        element: withSuspense(<ArchievedPage />),
-      },
-      {
-        path: "inbox",
-        element: withSuspense(<InboxPage />),
-      },
     ],
   },
+
+  // Login and Signup routes without RootLayout (no header/sidebar)
   {
-    path: "login",
+    path: "/login",
     element: withSuspense(<LoginPage />),
   },
   {
-    path: "signup",
+    path: "/signup",
     element: withSuspense(<SignUpPage />),
+  },
+
+  // Private routes wrapped in PrivateRoute and RootLayout
+  {
+    element: <PrivateRoute />,
+    children: [
+      {
+        path: "/",
+        element: withSuspense(<RootLayoutPage />),
+        errorElement: withSuspense(<ErrorPage />),
+        children: [
+          {
+            path: "classes",
+            element: withSuspense(<ClassRootLayout />),
+            children: [
+              {
+                index: true,
+                element: withSuspense(<ClassPage />),
+              },
+              {
+                path: ":classId",
+                element: withSuspense(<ClassDetailPage />),
+                children: [
+                  {
+                    path: "assignment/:assignmentId",
+                    element: withSuspense(<AssignmentDetail />),
+                  },
+                  {
+                    path: "material/:materialId",
+                    element: withSuspense(<AssignmentDetail />),
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            path: "todo",
+            element: withSuspense(<ToDoPage />),
+          },
+          {
+            path: "review",
+            element: withSuspense(<ReviewPage />),
+          },
+          {
+            path: "notification",
+            element: withSuspense(<NotificationPage />),
+          },
+          {
+            path: "archived",
+            element: withSuspense(<ArchievedPage />),
+          },
+          {
+            path: "inbox",
+            element: withSuspense(<InboxPage />),
+          },
+        ],
+      },
+    ],
+  },
+
+  // // Catch-all redirect to home
+  {
+    path: "*",
+    element: <Navigate to="/" replace />,
   },
 ]);
 

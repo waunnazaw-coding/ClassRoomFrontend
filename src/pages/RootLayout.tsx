@@ -10,6 +10,8 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Header from "../components/layout/Header";
 import Sidebar from "../components/layout/SideBar";
+import { AuthProvider } from "../contexts/AuthContext";
+import { ClassProvider } from "../contexts/ClassContext";
 
 const theme = createTheme({
   typography: {
@@ -21,40 +23,44 @@ export default function RootLayout() {
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
 
   return (
-    <ThemeProvider theme={theme}>
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
-      <CssBaseline />
-      <Header toggleSidebar={() => setSidebarOpen((prev) => !prev)} />
+    <AuthProvider>
+      <ClassProvider>
+        <ThemeProvider theme={theme}>
+          <ToastContainer
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+          />
+          <CssBaseline />
+          <Header toggleSidebar={() => setSidebarOpen((prev) => !prev)} />
 
-      <Box sx={{ display: "flex", minHeight: "100vh" }}>
-        <Sidebar open={sidebarOpen} />
+          <Box sx={{ display: "flex", minHeight: "100vh" }}>
+            <Sidebar open={sidebarOpen} />
 
-        <Box
-          component="main"
-          sx={{
-            flexGrow: 1,
-            pt: " 64px",
-            minHeight: "100vh",
-            overflowX: "hidden",
-            transition: "margin-left 0.3s",
-          }}
-          aria-label="main content"
-        >
-          <Box sx={{ width: "100%" }}>
-            <Outlet />
+            <Box
+              component="main"
+              sx={{
+                flexGrow: 1,
+                pt: " 64px",
+                minHeight: "100vh",
+                overflowX: "hidden",
+                transition: "margin-left 0.3s",
+              }}
+              aria-label="main content"
+            >
+              <Box sx={{ width: "100%" }}>
+                <Outlet />
+              </Box>
+            </Box>
           </Box>
-        </Box>
-      </Box>
-    </ThemeProvider>
+        </ThemeProvider>
+      </ClassProvider>
+    </AuthProvider>
   );
 }

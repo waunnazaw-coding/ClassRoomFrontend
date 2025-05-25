@@ -1,9 +1,10 @@
 import Box from "@mui/material/Box";
+import AssignmentDetail from "../../components/assignments/AssignmentDetail";
 
 function Inbox() {
   return (
-    <Box sx={{ px: { xs: 2, sm: 3 } }}>
-      <h2>Inbox</h2>
+    <Box>
+      <AssignmentDetail />
     </Box>
   );
 }

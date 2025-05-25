@@ -7,7 +7,7 @@ import TabPanel from "@mui/lab/TabPanel";
 import Stream from "./Stream";
 import ClassWork from "./ClassWork";
 import People from "./People";
-
+import Grade from "./Grade";
 function ClassDetailCard() {
   const [value, setValue] = React.useState("1");
 
@@ -20,13 +20,21 @@ function ClassDetailCard() {
       sx={{
         width: "100%",
         bgcolor: "background.paper",
-        maxWidth: "1200px",
         typography: "body1",
-        position: "fixed",
+        minHeight: "100vh",
       }}
     >
       <TabContext value={value}>
-        <Box sx={{ borderBottom: 2, borderColor: "divider" }}>
+        <Box
+          sx={{
+            borderBottom: 2,
+            borderColor: "divider",
+            position: "fixed",
+            width: "100%",
+            backgroundColor: "white",
+            zIndex: 1,
+          }}
+        >
           <TabList onChange={handleChange} aria-label="lab API tabs example">
             <Tab label="Stream" value="1" />
             <Tab label="Class Work" value="2" />
@@ -43,7 +51,9 @@ function ClassDetailCard() {
         <TabPanel value="3">
           <People />
         </TabPanel>
-        <TabPanel value="4">Item Four</TabPanel>
+        <TabPanel value="4">
+          <Grade />
+        </TabPanel>
       </TabContext>
     </Box>
   );

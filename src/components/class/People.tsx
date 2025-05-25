@@ -17,6 +17,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import AddStudentForm from "./AddStudentForm";
 import AddSubTeacherForm from "./AddSubTeacherForm";
 import ConfirmDialog from "../common/ConfirmDialog";
+import textColor from "../common/CreateTheme";
 
 const teachers = [
   {
@@ -135,11 +136,8 @@ function People() {
     <Box
       sx={{
         flexGrow: 1,
-        px: 2,
-        py: 3,
-        maxWidth: "1200px",
-        maxHeight: "100vh",
-        overflowX: "hidden",
+        p: 6,
+        width: "100%",
       }}
     >
       {/* Teachers Section */}
@@ -154,6 +152,7 @@ function People() {
             Teachers
           </Typography>
           <Button
+            sx={{ color: textColor }}
             aria-label="Add teacher"
             onClick={() => {
               setSubTeacher(true);
@@ -183,6 +182,7 @@ function People() {
                   <Typography variant="body1">{name}</Typography>
                 </Stack>
                 <Button
+                  sx={{ color: textColor }}
                   aria-controls={
                     menuState.userType === "teacher" && menuState.userId === id
                       ? `teacher-menu-${id}`
@@ -246,6 +246,7 @@ function People() {
             Students
           </Typography>
           <Button
+            sx={{ color: textColor }}
             aria-label="Add student"
             onClick={() => {
               setStudent(true);
@@ -276,6 +277,7 @@ function People() {
                 </Stack>
 
                 <Button
+                  sx={{ color: textColor }}
                   aria-controls={
                     menuState.userType === "student" && menuState.userId === id
                       ? `student-menu-${id}`

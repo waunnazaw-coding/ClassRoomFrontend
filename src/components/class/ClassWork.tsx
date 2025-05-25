@@ -13,6 +13,7 @@ import TopicIcon from "@mui/icons-material/Topic";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import { styled } from "@mui/material/styles";
+import InstructionCard from "../assignments/InstructionCard";
 
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: "#fff",
@@ -30,10 +31,28 @@ export default function ClassWork() {
   const [materialOpen, setMaterialOpen] = React.useState(false);
   const [topicOpen, setTopicOpen] = React.useState(false);
 
+  const assignmentName = "Chapter 3: Quadratic Equations";
+  const assignmentInstructions = `Please complete all exercises on pages 45-50.\nSubmit your answers as a single PDF file.\nMake sure to show all your work.`;
+
+  const handleEdit = () => {
+    alert("Edit assignment clicked");
+  };
+
+  const handleDelete = () => {
+    if (window.confirm("Are you sure you want to delete this assignment?")) {
+      alert("Assignment deleted");
+    }
+  };
+  const [value, setValue] = React.useState("1");
+
+  const handleChange = (event: React.SyntheticEvent, newValue: string) => {
+    setValue(newValue);
+  };
+
   return (
     <PopupState variant="popover" popupId="demo-popup-menu">
       {(popupState) => (
-        <Box sx={{ flexGrow: 1, p: 2, width: "100%", maxWidth: 1200 }}>
+        <Box sx={{ flexGrow: 1, p: 6, width: "100%" }}>
           <Button variant="contained" {...bindTrigger(popupState)}>
             Create New
           </Button>
@@ -68,11 +87,32 @@ export default function ClassWork() {
             </MenuItem>
           </Menu>
 
-          <Box sx={{ width: "100%" }}>
+          <Box sx={{ width: "100%", pt: 4 }}>
             <Stack spacing={2}>
-              <Item>Item 1</Item>
-              <Item>Item 2</Item>
-              <Item>Item 3</Item>
+              <InstructionCard
+                name={assignmentName}
+                instructions={assignmentInstructions}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+              <InstructionCard
+                name={assignmentName}
+                instructions={assignmentInstructions}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+              <InstructionCard
+                name={assignmentName}
+                instructions={assignmentInstructions}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+              <InstructionCard
+                name={assignmentName}
+                instructions={assignmentInstructions}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
             </Stack>
           </Box>
 

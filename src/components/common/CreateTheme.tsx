@@ -1,5 +1,5 @@
-import { blue } from "@mui/material/colors";
+import { grey } from "@mui/material/colors";
 
-const textColor = blue[500];
+const textColor = grey[900];
 
 export default textColor;

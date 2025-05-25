@@ -43,14 +43,14 @@ export default function RootLayout() {
           component="main"
           sx={{
             flexGrow: 1,
-            pt: "64px",
+            pt: " 64px",
             minHeight: "100vh",
             overflowX: "hidden",
             transition: "margin-left 0.3s",
           }}
           aria-label="main content"
         >
-          <Box sx={{ width: "100%", maxWidth: 1200, py: 3 }}>
+          <Box sx={{ width: "100%" }}>
             <Outlet />
           </Box>
         </Box>

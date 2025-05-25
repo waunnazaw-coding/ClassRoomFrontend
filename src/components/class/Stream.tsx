@@ -20,7 +20,7 @@ const Item = styled(Paper)(({ theme }) => ({
 
 export default function Stream() {
   return (
-    <Box sx={{ flexGrow: 1, p: 2, width: "100%", maxWidth: 1200 }}>
+    <Box sx={{ flexGrow: 1, p: 6, width: "100%" }}>
       <Grid container spacing={2}>
         <Grid size={12}>
           <Item>

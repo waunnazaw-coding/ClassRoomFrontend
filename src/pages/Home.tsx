@@ -3,7 +3,7 @@ import ClassCard from "../components/class/ClassCard";
 
 function Home() {
   return (
-    <Box sx={{ px: { xs: 2, sm: 3 }, m: 2, maxWidth: "1200px" }}>
+    <Box sx={{ p: 6, minHeight: "100vh" }}>
       <ClassCard />
     </Box>
   );

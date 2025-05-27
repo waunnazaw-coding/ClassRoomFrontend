@@ -10,15 +10,6 @@ import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import Divider from "@mui/material/Divider";
 import CloseIcon from "@mui/icons-material/Close";
-import Slide from "@mui/material/Slide";
-import { TransitionProps } from "@mui/material/transitions";
-
-const Transition = React.forwardRef(function Transition(
-  props: TransitionProps & { children: React.ReactElement },
-  ref: React.Ref<unknown>,
-) {
-  return <Slide direction="up" ref={ref} {...props} />;
-});
 
 interface AssignmentDialogProps {
   open: boolean;
@@ -30,13 +21,8 @@ export default function AssignmentCreateFrom({
   onClose,
 }: AssignmentDialogProps) {
   return (
-    <Dialog
-      fullScreen
-      open={open}
-      onClose={onClose}
-      TransitionComponent={Transition}
-    >
-      <AppBar sx={{ position: "relative" }}>
+    <Dialog fullScreen open={open} onClose={onClose}>
+      <AppBar sx={{ position: "relative", backgroundColor: "#1976d2" }}>
         <Toolbar>
           <IconButton
             edge="start"

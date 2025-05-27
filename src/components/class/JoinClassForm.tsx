@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -13,35 +13,53 @@ import {
   useTheme,
 } from "@mui/material";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import { enrollInClass } from "../../services/classes";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface JoinClassDialogProps {
   open: boolean;
   onClose: () => void;
-  user?: {
-    name: string;
-    email: string;
-    avatarUrl?: string;
-  };
+  onJoinSuccess: () => void;
 }
 
 const JoinClassDialog: React.FC<JoinClassDialogProps> = ({
   open,
   onClose,
-  user,
+  onJoinSuccess,
 }) => {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("md"));
-  const [classCode, setClassCode] = React.useState("");
+  const [classCode, setClassCode] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!classCode.trim()) {
-      alert("Please enter a class code.");
+      toast.error("Please enter a class code.");
       return;
     }
-    // Submit logic here
-    alert(`Joining class with code: ${classCode}`);
-    setClassCode("");
-    onClose();
+    if (!user) {
+      toast.error("User not logged in.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await enrollInClass(classCode.trim(), user.id);
+      toast.success(res.message || "Successfully joined the class.");
+      setClassCode("");
+      onJoinSuccess(); // Notify parent to refresh classes
+      onClose();
+    } catch (error: any) {
+      const errorMsg =
+        error.response?.data?.message ||
+        "Failed to join class. Please check the code and try again.";
+      toast.error(errorMsg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -55,15 +73,17 @@ const JoinClassDialog: React.FC<JoinClassDialogProps> = ({
       <DialogTitle sx={{ fontWeight: 600 }}>Join class</DialogTitle>
       <DialogContent>
         <Box display="flex" alignItems="center" mb={2}>
-          {user?.avatarUrl ? (
-            <Avatar src={user.avatarUrl} sx={{ mr: 2 }} />
+          {user?.profile ? (
+            <Avatar src={user.profile} sx={{ mr: 2 }} />
           ) : (
             <Avatar sx={{ mr: 2 }}>
               <AccountCircleIcon />
             </Avatar>
           )}
           <Box>
-            <Typography variant="body1">{user?.name || "User Name"}</Typography>
+            <Typography variant="body1">
+              {user?.username || "User Name"}
+            </Typography>
             <Typography variant="body2" color="text.secondary">
               {user?.email || "user@example.com"}
             </Typography>
@@ -82,19 +102,20 @@ const JoinClassDialog: React.FC<JoinClassDialogProps> = ({
           value={classCode}
           onChange={(e) => setClassCode(e.target.value)}
           helperText="Ask your teacher for the class code"
+          disabled={loading}
         />
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={onClose} color="inherit">
+        <Button onClick={onClose} color="inherit" disabled={loading}>
           Cancel
         </Button>
         <Button
           variant="contained"
           onClick={handleSubmit}
-          disabled={!classCode.trim()}
+          disabled={!classCode.trim() || loading}
         >
-          Join
+          {loading ? "Joining..." : "Join"}
         </Button>
       </DialogActions>
     </Dialog>

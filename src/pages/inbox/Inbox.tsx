@@ -1,5 +1,5 @@
 import Box from "@mui/material/Box";
-import AssignmentDetail from "../../components/assignments/AssignmentDetail";
+import AssignmentDetail from "../../components/assignments/AssignmentDetailForTeach";
 
 function Inbox() {
   return (

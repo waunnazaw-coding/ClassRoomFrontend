@@ -38,7 +38,19 @@ export default function RootLayout() {
             pauseOnHover
           />
           <CssBaseline />
-          <Header toggleSidebar={() => setSidebarOpen((prev) => !prev)} />
+          <Header
+            toggleSidebar={() => setSidebarOpen((prev) => !prev)}
+            onOpenJoinModal={() => {}}
+            onOpenCreateModal={() => {}}
+            dialogType={null}
+            onDialogClose={() => {}}
+            onJoinSuccess={function (): void {
+              throw new Error("Function not implemented.");
+            }}
+            onCreateSuccess={function (newClass: any): void {
+              throw new Error("Function not implemented.");
+            }}
+          />
 
           <Box sx={{ display: "flex", minHeight: "100vh" }}>
             <Sidebar open={sidebarOpen} />

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dashboard,
   School,
@@ -12,23 +12,28 @@ import {
   ExpandMore,
   LocalLibrary,
   TrendingUp,
-  Replay,
-  LocalShipping,
 } from "@mui/icons-material";
 import {
+  Avatar,
   Box,
   Collapse,
   Divider,
   Drawer,
   List,
+  ListItemAvatar,
   ListItemButton,
   ListItemIcon,
   ListItemText,
   Toolbar,
   Tooltip,
 } from "@mui/material";
+import ClassIcon from "@mui/icons-material/Class";
 import textColor from "../../components/common/CreateTheme";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { ClassResponseDto } from "@/types";
+import { getClassesByUserId } from "@/services/classes";
+import { generateColorScheme } from "./generateColorSheme";
 
 interface SidebarProps {
   open: boolean;
@@ -38,6 +43,28 @@ const Sidebar: React.FC<SidebarProps> = ({ open }) => {
   const [openTeaching, setOpenTeaching] = useState(false);
   const [openEnrolled, setOpenEnrolled] = useState(false);
   const [hovered, setHovered] = useState(false);
+  const location = useLocation();
+  const { user } = useAuth();
+  const [classes, setClasses] = useState<ClassResponseDto[]>([]);
+
+  useEffect(() => {
+    if (!user) {
+      setClasses([]);
+      return;
+    }
+
+    getClassesByUserId(Number(user.id))
+      .then((data) => {
+        const activeClasses = data.filter((cls) => !cls.isDeleted);
+        setClasses(activeClasses);
+      })
+      .catch((err) => {});
+  }, [user]);
+
+  const teachingClasses = classes.filter(
+    (cls) => cls.role === "Teacher" || cls.role === "SubTeacher",
+  );
+  const enrolledClasses = classes.filter((cls) => cls.role === "Student");
 
   const isSidebarOpen = open || hovered;
 
@@ -79,6 +106,8 @@ const Sidebar: React.FC<SidebarProps> = ({ open }) => {
             </ListItemButton>
           </Tooltip>
 
+          {/* <Divider sx={{ my: 1 }} /> */}
+
           {/* Teaching - collapsible */}
           <Tooltip title={!isSidebarOpen ? "Teaching" : ""} placement="right">
             <ListItemButton
@@ -104,44 +133,33 @@ const Sidebar: React.FC<SidebarProps> = ({ open }) => {
             <List component="div" disablePadding>
               <ListItemButton
                 component={RouterLink}
-                to="/teaching/courses"
+                to="/review"
                 sx={{ pl: 4, color: textColor }}
               >
                 <ListItemIcon sx={{ color: textColor }}>
                   <MenuBook />
                 </ListItemIcon>
-                <ListItemText primary="Courses" />
+                <ListItemText primary="To Review" />
               </ListItemButton>
-              <ListItemButton
-                component={RouterLink}
-                to="/teaching/progress"
-                sx={{ pl: 4, color: textColor }}
-              >
-                <ListItemIcon sx={{ color: textColor }}>
-                  <TrendingUp />
-                </ListItemIcon>
-                <ListItemText primary="Progress" />
-              </ListItemButton>
-              <ListItemButton
-                component={RouterLink}
-                to="/teaching/refunds"
-                sx={{ pl: 4, color: textColor }}
-              >
-                <ListItemIcon sx={{ color: textColor }}>
-                  <Replay />
-                </ListItemIcon>
-                <ListItemText primary="Refunds" />
-              </ListItemButton>
-              <ListItemButton
-                component={RouterLink}
-                to="/teaching/shipping"
-                sx={{ pl: 4, color: textColor }}
-              >
-                <ListItemIcon sx={{ color: textColor }}>
-                  <LocalShipping />
-                </ListItemIcon>
-                <ListItemText primary="Shipping" />
-              </ListItemButton>
+              {teachingClasses.map((cls) => (
+                <ListItemButton
+                  key={cls.id}
+                  component={RouterLink}
+                  to={`/classes/${cls.id}`}
+                  sx={{ pl: 4, color: textColor }}
+                >
+                  <ListItemAvatar>
+                    {/* Replace Avatar with Icon */}
+                    <ClassIcon
+                      sx={{
+                        color: generateColorScheme(cls.name).baseColor,
+                        fontSize: 28,
+                      }}
+                    />
+                  </ListItemAvatar>
+                  <ListItemText primary={cls.name} />
+                </ListItemButton>
+              ))}
             </List>
           </Collapse>
 
@@ -172,25 +190,33 @@ const Sidebar: React.FC<SidebarProps> = ({ open }) => {
             <List component="div" disablePadding>
               <ListItemButton
                 component={RouterLink}
-                to="/enrolled/courses"
-                sx={{ pl: 4, color: textColor }}
-              >
-                <ListItemIcon sx={{ color: textColor }}>
-                  <MenuBook />
-                </ListItemIcon>
-                <ListItemText primary="Courses" />
-              </ListItemButton>
-              <ListItemButton
-                component={RouterLink}
-                to="/enrolled/progress"
+                to="/todo"
                 sx={{ pl: 4, color: textColor }}
               >
                 <ListItemIcon sx={{ color: textColor }}>
                   <TrendingUp />
                 </ListItemIcon>
-                <ListItemText primary="Progress" />
+                <ListItemText primary="To Do" />
               </ListItemButton>
-              {/* Add more enrolled sub-items here if needed */}
+              {enrolledClasses.map((cls) => (
+                <ListItemButton
+                  key={cls.id}
+                  component={RouterLink}
+                  to={`/classes/${cls.id}`}
+                  sx={{ pl: 4, color: textColor }}
+                >
+                  <ListItemAvatar>
+                    {/* Replace Avatar with Icon */}
+                    <ClassIcon
+                      sx={{
+                        color: generateColorScheme(cls.name).baseColor,
+                        fontSize: 28,
+                      }}
+                    />
+                  </ListItemAvatar>
+                  <ListItemText primary={cls.name} />
+                </ListItemButton>
+              ))}
             </List>
           </Collapse>
 

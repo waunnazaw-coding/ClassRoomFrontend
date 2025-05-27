@@ -1,210 +1,348 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
-  Box,
   Card,
   CardContent,
-  Typography,
-  CardActionArea,
   CardMedia,
-  Skeleton,
   Avatar,
-  AvatarGroup,
   IconButton,
   Menu,
   MenuItem,
+  Typography,
+  Box,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
 } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import { Link as RouterLink } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext"; 
-import { unenrollFromClass } from "../../services/classes"; // Adjust path
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+import ExitToAppIcon from "@mui/icons-material/ExitToApp";
+import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
+import { generateColorScheme } from "../layout/generateColorSheme";
+import {
+  updateClass,
+  deleteClass,
+  unenrollFromClass,
+} from "../../services/classes";
+import { ClassResponseDto } from "../../types/index";
+import EditClassModal from "./EditClassForm";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface ClassCardProps {
-  id: number;
-  name: string;
-  section: string;
-  classCode: string;
-  subject: string;
-  role: string; // "student" | "teacher" | "none"
-  isDeleted: boolean;
-  room: string;
-  createdBy?: number;
-  createdDate?: string;
-  participants?: Array<{ id: number; name: string; avatarUrl?: string }>;
+  classes: ClassResponseDto[];
+  setClasses: React.Dispatch<React.SetStateAction<ClassResponseDto[]>>;
 }
 
-interface SelectActionCardProps {
-  classes: ClassCardProps[];
-  loading: boolean;
-  onUnenroll?: (classId: number) => void; // callback after unenroll
-}
+const randomImages = [
+  "https://gstatic.com/classroom/themes/img_reachout.jpg",
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQkuRwoZD7RVhvkEU6Kpizc339O5pVlsM5lNw&s",
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRM74fAUXIPLtGzNCbNgLE-Ce9iBKvlvGa-ow&s",
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT94eF8n0RNHFzs2frZzUZDBSDZDBbX2I3bmQ&s",
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQTOysRYoTP-M-o917gIkUqbiKCJibwLOfIng&s",
+];
 
-const SelectActionCard: React.FC<SelectActionCardProps> = ({
-  classes,
-  loading,
-  onUnenroll,
-}) => {
+export default function ClassCard({ classes, setClasses }: ClassCardProps) {
   const { user } = useAuth();
-  const [selectedCard, setSelectedCard] = useState<number | null>(null);
-  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
-  const [menuClassId, setMenuClassId] = useState<number | null>(null);
 
-  const handleCardClick = (classId: number) => {
-    setSelectedCard(classId);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editClass, setEditClass] = useState<ClassResponseDto | null>(null);
+
+  const [confirm, setConfirm] = useState({
+    open: false,
+    title: "",
+    description: "",
+    onConfirm: () => {},
+  });
+
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const [menuClass, setMenuClass] = useState<ClassResponseDto | null>(null);
+
+  const showToast = (
+    message: string,
+    type: "success" | "error" = "success",
+  ) => {
+    toast[type](message);
+  };
+
+  const handleEditClick = (cls: ClassResponseDto) => {
+    setEditClass(cls);
+    setEditOpen(true);
+    handleMenuClose();
+  };
+
+  const handleUpdate = async (updatedData: {
+    name: string;
+    section?: string;
+    subject?: string;
+    room?: string;
+  }) => {
+    if (!editClass) return;
+
+    try {
+      const updatedClass = await updateClass(editClass.id, updatedData);
+      showToast("Class updated successfully.");
+      setEditOpen(false);
+      setEditClass(null);
+
+      setClasses((prevClasses) =>
+        prevClasses.map((cls) =>
+          cls.id === updatedClass.id ? updatedClass : cls,
+        ),
+      );
+    } catch (error: any) {
+      const errorMsg =
+        error?.response?.data?.message || "Failed to update class";
+      showToast(errorMsg, "error");
+    }
+  };
+
+  const handleDeleteClick = (cls: ClassResponseDto) => {
+    setConfirm({
+      open: true,
+      title: "Delete Class",
+      description: `Are you sure you want to delete class "${cls.name}"? This action cannot be undone.`,
+      onConfirm: async () => {
+        const originalClasses = [...classes];
+        setClasses((prev) => prev.filter((c) => c.id !== cls.id));
+
+        try {
+          await deleteClass(cls.id);
+          showToast("Class deleted successfully.");
+        } catch (error: any) {
+          setClasses(originalClasses);
+          showToast(
+            error.response?.data?.message || "Failed to delete class",
+            "error",
+          );
+        } finally {
+          setConfirm((prev) => ({ ...prev, open: false }));
+        }
+      },
+    });
+    handleMenuClose();
+  };
+
+  const handleUnenrollClick = (cls: ClassResponseDto) => {
+    setConfirm({
+      open: true,
+      title: "Leave Class",
+      description: `Are you sure you want to leave class "${cls.name}"?`,
+      onConfirm: async () => {
+        const originalClasses = [...classes];
+        setClasses((prev) => prev.filter((c) => c.id !== cls.id));
+
+        try {
+          if (user) {
+            await unenrollFromClass(cls.id, Number(user.id));
+            showToast("You have left the class.");
+          } else {
+            throw new Error("User is not authenticated.");
+          }
+        } catch (error: any) {
+          setClasses(originalClasses);
+          showToast(
+            error.response?.data?.message || "Failed to leave class",
+            "error",
+          );
+        } finally {
+          setConfirm((prev) => ({ ...prev, open: false }));
+        }
+      },
+    });
+    handleMenuClose();
   };
 
   const handleMenuOpen = (
     event: React.MouseEvent<HTMLElement>,
-    classId: number,
+    cls: ClassResponseDto,
   ) => {
-    setMenuAnchorEl(event.currentTarget);
-    setMenuClassId(classId);
+    setMenuAnchor(event.currentTarget);
+    setMenuClass(cls);
   };
 
   const handleMenuClose = () => {
-    setMenuAnchorEl(null);
-    setMenuClassId(null);
-  };
-
-  const handleUnenroll = async () => {
-    if (!menuClassId || !user) return;
-    try {
-      await unenrollFromClass(menuClassId, user.id);
-      if (onUnenroll) onUnenroll(menuClassId);
-      handleMenuClose();
-    } catch (error) {
-      console.error("Failed to unenroll", error);
-      // Optionally show toast or error message
-    }
+    setMenuAnchor(null);
+    setMenuClass(null);
   };
 
   return (
-    <Box
-      sx={{
-        width: "100%",
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(min(280px, 100%), 1fr))",
-        gap: 3,
-      }}
-    >
-      {loading
-        ? Array.from(new Array(4)).map((_, index) => (
-            <Card key={index} sx={{ maxWidth: 345 }}>
-              <Skeleton variant="rectangular" height={140} />
-              <CardContent>
-                <Skeleton variant="text" height={40} width="60%" />
-                <Skeleton variant="text" height={20} width="80%" />
-                <Skeleton variant="text" height={20} width="80%" />
-              </CardContent>
-            </Card>
-          ))
-        : classes.map((cls) => {
-            const isStudent = cls.role === "Student";
-            const isTeacher = cls.role === "Teacher";
-            const participants = cls.participants || [];
+    <>
+      <Box
+        sx={{
+          width: "100%",
+          display: "grid",
+          gridTemplateColumns:
+            "repeat(auto-fill, minmax(min(250px, 100%), 1fr))",
+          gap: 2.8,
+        }}
+      >
+        {classes.map((cls, index) => {
+          const { baseColor } = generateColorScheme(cls.name);
+          const image = randomImages[index % randomImages.length];
 
-            return (
+          return (
+            <Box key={cls.id}>
               <Card
-                key={cls.id}
                 sx={{
-                  maxWidth: 345,
-                  border:
-                    selectedCard === cls.id ? "2px solid #1976d2" : "none",
-                  cursor: "pointer",
                   position: "relative",
+                  minHeight: 320,
+                  borderRadius: 3,
+                  boxShadow: 3,
+                  transition: "box-shadow 0.3s",
+                  "&:hover": { boxShadow: 8 },
+                  display: "flex",
+                  flexDirection: "column",
+                  overflow: "visible",
+                  background: "#fff",
                 }}
               >
-                <CardActionArea
-                  component={RouterLink}
+                <Box
+                  sx={{ position: "absolute", top: 12, right: 12, zIndex: 2 }}
+                >
+                  <Tooltip title="Options">
+                    <IconButton
+                      size="small"
+                      onClick={(e) => handleMenuOpen(e, cls)}
+                    >
+                      <MoreVertIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+
+                <Menu
+                  anchorEl={menuAnchor}
+                  open={Boolean(menuAnchor) && menuClass?.id === cls.id}
+                  onClose={handleMenuClose}
+                  anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                  transformOrigin={{ vertical: "top", horizontal: "right" }}
+                >
+                  {(cls.role === "Teacher" || cls.role === "Owner") && [
+                    <MenuItem key="edit" onClick={() => handleEditClick(cls)}>
+                      <EditIcon sx={{ mr: 1 }} fontSize="small" /> Edit
+                    </MenuItem>,
+                    <MenuItem
+                      key="delete"
+                      onClick={() => handleDeleteClick(cls)}
+                      sx={{ color: "error.main" }}
+                    >
+                      <DeleteForeverIcon sx={{ mr: 1 }} fontSize="small" />{" "}
+                      Delete
+                    </MenuItem>,
+                  ]}
+                  {cls.role === "Student" && (
+                    <MenuItem onClick={() => handleUnenrollClick(cls)}>
+                      <ExitToAppIcon sx={{ mr: 1 }} fontSize="small" /> Leave
+                    </MenuItem>
+                  )}
+                </Menu>
+
+                <Link
                   to={`/classes/${cls.id}`}
-                  onClick={() => handleCardClick(cls.id)}
+                  style={{
+                    textDecoration: "none",
+                    color: "inherit",
+                    flexGrow: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
                 >
                   <CardMedia
                     component="img"
                     height="140"
-                    image="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80"
+                    image={image}
                     alt={cls.name}
+                    sx={{
+                      borderRadius: "12px 12px 0 0",
+                      objectFit: "cover",
+                      filter: "brightness(0.92)",
+                    }}
                   />
-                  <CardContent>
-                    <Typography
-                      gutterBottom
-                      variant="h5"
-                      component="div"
-                      noWrap
-                    >
-                      {cls.name} {cls.section && `- ${cls.section}`}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" noWrap>
-                      Subject: {cls.subject}
-                    </Typography>
 
-                    {isStudent && participants.length > 0 && (
-                      <Box sx={{ mt: 2 }}>
-                        <Typography variant="subtitle2" gutterBottom>
-                          Classmates:
-                        </Typography>
-                        <AvatarGroup max={4}>
-                          {participants.map((p) => (
-                            <Tooltip key={p.id} title={p.name}>
-                              <Avatar
-                                alt={p.name}
-                                src={p.avatarUrl}
-                                sx={{ width: 32, height: 32 }}
-                              >
-                                {p.name.charAt(0)}
-                              </Avatar>
-                            </Tooltip>
-                          ))}
-                        </AvatarGroup>
-                      </Box>
+                  {cls.role === "Student" && (
+                    <Avatar
+                      alt={cls.name}
+                      sx={{
+                        width: 56,
+                        height: 56,
+                        position: "absolute",
+                        top: 110,
+                        right: 20,
+                        border: "3px solid #fff",
+                        boxShadow: 3,
+                        bgcolor: baseColor,
+                        color: "#fff",
+                        fontWeight: 700,
+                        fontSize: "1.5rem",
+                        userSelect: "none",
+                      }}
+                    >
+                      {cls.name.charAt(0).toUpperCase()}
+                    </Avatar>
+                  )}
+
+                  <CardContent sx={{ pt: 4, pb: 2 }}>
+                    <Typography variant="h6" fontWeight={700} gutterBottom>
+                      {cls.name}
+                    </Typography>
+                    {cls.subject && (
+                      <Typography variant="body2" color="text.secondary">
+                        {cls.subject}
+                      </Typography>
+                    )}
+                    {cls.room && (
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mt: 0.5 }}
+                      >
+                        Room: {cls.room}
+                      </Typography>
                     )}
                   </CardContent>
-                </CardActionArea>
-
-                {(isStudent || isTeacher) && (
-                  <>
-                    <IconButton
-                      aria-label="more"
-                      aria-controls="class-menu"
-                      aria-haspopup="true"
-                      onClick={(e) => handleMenuOpen(e, cls.id)}
-                      sx={{ position: "absolute", top: 8, right: 8 }}
-                    >
-                      <MoreVertIcon />
-                    </IconButton>
-
-                    <Menu
-                      id="class-menu"
-                      anchorEl={menuAnchorEl}
-                      open={Boolean(menuAnchorEl) && menuClassId === cls.id}
-                      onClose={handleMenuClose}
-                      anchorOrigin={{
-                        vertical: "top",
-                        horizontal: "right",
-                      }}
-                      transformOrigin={{
-                        vertical: "top",
-                        horizontal: "right",
-                      }}
-                    >
-                      {isStudent && (
-                        <MenuItem onClick={handleUnenroll}>Unenroll</MenuItem>
-                      )}
-                      {isTeacher && (
-                        <>
-                          <MenuItem>Manage Class</MenuItem>
-                          <MenuItem>View Participants</MenuItem>
-                          {/* Add more teacher actions here */}
-                        </>
-                      )}
-                    </Menu>
-                  </>
-                )}
+                </Link>
               </Card>
-            );
-          })}
-    </Box>
-  );
-};
+            </Box>
+          );
+        })}
+      </Box>
 
-export default SelectActionCard;
+      {editClass && (
+        <EditClassModal
+          open={editOpen}
+          onClose={() => setEditOpen(false)}
+          onUpdate={handleUpdate}
+          initialData={{
+            name: editClass.name,
+            section: editClass.section,
+            subject: editClass.subject,
+            room: editClass.room,
+          }}
+        />
+      )}
+
+      <Dialog
+        open={confirm.open}
+        onClose={() => setConfirm((prev) => ({ ...prev, open: false }))}
+      >
+        <DialogTitle>{confirm.title}</DialogTitle>
+        <DialogContent>
+          <Typography>{confirm.description}</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setConfirm((prev) => ({ ...prev, open: false }))}
+          >
+            Cancel
+          </Button>
+          <Button color="error" onClick={confirm.onConfirm}>
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  );
+}

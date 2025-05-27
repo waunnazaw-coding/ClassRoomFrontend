@@ -1,5 +1,5 @@
 export interface ClassDetailDto {
-  id: number;
+  entityId: number;
   entityType: string;
   content: string;
   activityDate: string;

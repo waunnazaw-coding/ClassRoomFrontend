@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -9,20 +9,27 @@ import {
   Box,
   useMediaQuery,
   useTheme,
+  CircularProgress,
 } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createClass } from "../../services/classes"; // Adjust path as needed
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { ClassRequestDto, ClassResponseDto } from "../../types/index";
 
 interface CreateClassDialogProps {
   open: boolean;
   onClose: () => void;
-  onCreateSuccess: (newClass: ClassResponseDto) => void;
-  createdBy?: number; // Optional userId prop if needed
+  onUpdate: (updatedData: {
+    name: string;
+    section?: string;
+    subject?: string;
+    room?: string;
+  }) => Promise<void>;
+  initialData: {
+    name: string;
+    section?: string;
+    subject?: string;
+    room?: string;
+  };
 }
 
 const schema = z.object({
@@ -34,11 +41,11 @@ const schema = z.object({
 
 type CreateClassForm = z.infer<typeof schema>;
 
-const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
+const EditClassDialog: React.FC<CreateClassDialogProps> = ({
   open,
   onClose,
-  onCreateSuccess,
-  createdBy,
+  onUpdate,
+  initialData,
 }) => {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("md"));
@@ -51,31 +58,39 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
     reset,
   } = useForm<CreateClassForm>({
     resolver: zodResolver(schema),
-    mode: "onChange", // Real-time validation
+    mode: "onChange",
+    defaultValues: {
+      className: initialData.name,
+      section: initialData.section || "",
+      subject: initialData.subject || "",
+      room: initialData.room || "",
+    },
   });
+
+  // Reset form when initialData or open changes
+  useEffect(() => {
+    reset({
+      className: initialData.name,
+      section: initialData.section || "",
+      subject: initialData.subject || "",
+      room: initialData.room || "",
+    });
+  }, [initialData, reset, open]);
 
   const onSubmit = async (data: CreateClassForm) => {
     setLoading(true);
     try {
-      // Prepare the request payload, mapping form fields to API fields
-      const payload: ClassRequestDto = {
-        userId: createdBy || 0, // Use provided userId or default to 0
+      await onUpdate({
         name: data.className,
-        section: data.section || "",
-        subject: data.subject || "",
-        room: data.room || "",
-      };
-
-      const newClass = await createClass(payload);
-      toast.success(`Class "${newClass.name}" created successfully.`);
-      onCreateSuccess(newClass);
+        section: data.section,
+        subject: data.subject,
+        room: data.room,
+      });
       reset();
       onClose();
-    } catch (error: any) {
-      toast.error(
-        error.response?.data?.message ||
-          "Failed to create class. Please try again.",
-      );
+    } catch (error) {
+      // Optionally handle error here or in onUpdate
+      console.error("Failed to update class", error);
     } finally {
       setLoading(false);
     }
@@ -94,7 +109,7 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
       fullWidth
       maxWidth="sm"
     >
-      <DialogTitle>Create a New Class</DialogTitle>
+      <DialogTitle>Edit Class</DialogTitle>
       <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
         <DialogContent>
           <TextField
@@ -141,8 +156,9 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
             type="submit"
             variant="contained"
             disabled={!isDirty || !isValid || loading}
+            startIcon={loading ? <CircularProgress size={20} /> : null}
           >
-            {loading ? "Creating..." : "Create"}
+            {loading ? "Updating..." : "Update"}
           </Button>
         </DialogActions>
       </Box>
@@ -150,4 +166,4 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
   );
 };
 
-export default CreateClassDialog;
+export default EditClassDialog;

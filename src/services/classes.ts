@@ -11,7 +11,7 @@ import {
 } from "../types/index";
 
 export async function createClass(
-  data: ClassRequestDto
+  data: ClassRequestDto,
 ): Promise<ClassResponseDto> {
   const response = await axiosInstance.post("/classes", data);
   return response.data;
@@ -27,7 +27,7 @@ interface ApiResponse<T> {
 // Your existing GetClassDetailsResponse interface/type should be defined elsewhere
 
 export async function getClassDetails(
-  classId: number
+  classId: number,
 ): Promise<GetClassDetailsResponse> {
   try {
     const response = await axiosInstance.get<
@@ -54,10 +54,10 @@ export async function getClassDetails(
 
 export async function enrollInClass(
   classCode: string,
-  studentId: number
+  studentId: number,
 ): Promise<EnrollmentResponse> {
   const response = await axiosInstance.post(
-    `/classes/code/${encodeURIComponent(classCode)}/enroll/${studentId}`
+    `/classes/code/${encodeURIComponent(classCode)}/enroll/${studentId}`,
   );
   return response.data;
 }
@@ -65,22 +65,39 @@ export async function enrollInClass(
 export async function getClassById(classId: number): Promise<Class[]> {
   const response = await axiosInstance.get(`/classes/${classId}`);
   return response.data;
+}
 
-  console.log(response.data);
+export async function getRole(
+  userId: number,
+  classId: number,
+): Promise<string> {
+  const response = await axiosInstance.get(
+    `/classes/${classId}/participants/${userId}/role`,
+  );
+  return response.data;
 }
 
 // Get all classes for a user
 export async function getClassesByUserId(
-  userId: number
+  userId: number,
 ): Promise<ClassResponseDto[]> {
   const response = await axiosInstance.get(`/classes/user/${userId}`);
+  return response.data;
+}
+
+export async function getClassDetailsWithEntityId(
+  classId: number,
+): Promise<ClassResponseDto[]> {
+  const response = await axiosInstance.get(
+    `/classes/${classId}/details-with-entityId`,
+  );
   return response.data;
 }
 
 // Update class details
 export async function updateClass(
   id: number,
-  data: ClassUpdateRequestDto
+  data: ClassUpdateRequestDto,
 ): Promise<ClassResponseDto> {
   const response = await axiosInstance.put(`/classes/${id}`, data);
   return response.data;
@@ -104,16 +121,16 @@ export async function actualDeleteClass(id: number): Promise<void> {
 // Unenroll student from class
 export async function unenrollFromClass(
   classId: number,
-  studentId: number
+  studentId: number,
 ): Promise<void> {
   await axiosInstance.delete(
-    `/classes/${classId}/participants/students/${studentId}`
+    `/classes/${classId}/participants/students/${studentId}`,
   );
 }
 
 // Get participants for a class
 export async function getClassParticipants(
-  classId: number
+  classId: number,
 ): Promise<UserDto[]> {
   const response = await axiosInstance.get(`/classes/${classId}/participants`);
   return response.data;
@@ -121,17 +138,17 @@ export async function getClassParticipants(
 
 // Get topics with materials and assignments for a class
 export async function getTopicsWithMaterialsAndAssignments(
-  classId: number
+  classId: number,
 ): Promise<TopicWithMaterialsAssignmentsDto[]> {
   const response = await axiosInstance.get(
-    `/classes/${classId}/topics-with-materials-assignments`
+    `/classes/${classId}/topics-with-materials-assignments`,
   );
   return response.data;
 }
 
 // If your backend has a different endpoint for class works, e.g.:
 export async function getClassWorks(
-  classId: number
+  classId: number,
 ): Promise<TopicWithMaterialsAssignmentsDto[]> {
   const response = await axiosInstance.get(`/classes/${classId}/class-works`);
   return response.data;
@@ -141,7 +158,7 @@ export async function getClassWorks(
 export async function addSubTeacherToClass(
   teacherUserId: number,
   classId: number,
-  email: string
+  email: string,
 ): Promise<{ message: string }> {
   const response = await axiosInstance.post(
     `/classes/${classId}/participants/subteachers`,
@@ -150,7 +167,7 @@ export async function addSubTeacherToClass(
       params: {
         teacherUserId,
       },
-    }
+    },
   );
   return response.data;
 }
@@ -159,7 +176,7 @@ export async function addSubTeacherToClass(
 export async function addStudentToClass(
   teacherUserId: number,
   classId: number,
-  email: string
+  email: string,
 ): Promise<{ message: string }> {
   const response = await axiosInstance.post(
     `/classes/${classId}/participants/students`,
@@ -168,7 +185,7 @@ export async function addStudentToClass(
       params: {
         teacherUserId,
       },
-    }
+    },
   );
   return response.data;
 }
@@ -176,7 +193,7 @@ export async function addStudentToClass(
 export async function transferClassOwnership(
   classId: number,
   currentOwnerId: number,
-  newOwnerId: number
+  newOwnerId: number,
 ): Promise<{ message: string }> {
   const response = await axiosInstance.put(
     `/classes/${classId}/participants/transfer-ownership`,
@@ -186,7 +203,7 @@ export async function transferClassOwnership(
         currentOwnerId,
         newOwnerId,
       },
-    }
+    },
   );
   return response.data;
 }
@@ -195,19 +212,19 @@ export async function transferClassOwnership(
 // Make sure this endpoint exists in your API controller
 export async function removeSubTeacherFromClass(
   classId: number,
-  subTeacherId: number
+  subTeacherId: number,
 ): Promise<void> {
   await axiosInstance.delete(
-    `/classes/${classId}/participants/sub-teachers/${subTeacherId}`
+    `/classes/${classId}/participants/sub-teachers/${subTeacherId}`,
   );
 }
 
 // Remove student from class
 export async function removeStudentFromClass(
   classId: number,
-  studentId: number
+  studentId: number,
 ): Promise<void> {
   await axiosInstance.delete(
-    `/classes/${classId}/participants/students/${studentId}`
+    `/classes/${classId}/participants/students/${studentId}`,
   );
 }

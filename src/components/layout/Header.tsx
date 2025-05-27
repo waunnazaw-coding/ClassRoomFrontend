@@ -32,9 +32,13 @@ import { useAuth } from "../../contexts/AuthContext";
 
 interface HeaderProps {
   toggleSidebar: () => void;
+  onOpenJoinModal: () => void;
+  onOpenCreateModal: () => void;
+  dialogType: "join" | "create" | null;
+  onDialogClose: () => void;
+  onJoinSuccess: () => void;
+  onCreateSuccess: (newClass: any) => void; // Adjust type as needed
 }
-
-type DialogType = "join" | "create" | null;
 
 const breadcrumbNameMap: Record<string, string> = {
   dashboard: "Dashboard",
@@ -45,7 +49,15 @@ const breadcrumbNameMap: Record<string, string> = {
   signup: "Sign Up",
 };
 
-const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
+const Header: React.FC<HeaderProps> = ({
+  toggleSidebar,
+  onOpenJoinModal,
+  onOpenCreateModal,
+  dialogType,
+  onDialogClose,
+  onJoinSuccess,
+  onCreateSuccess,
+}) => {
   const location = useLocation();
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("md"));
@@ -60,7 +72,6 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     React.useState<null | HTMLElement>(null);
   const [mobileMenuAnchorEl, setMobileMenuAnchorEl] =
     React.useState<null | HTMLElement>(null);
-  const [dialogType, setDialogType] = React.useState<DialogType>(null);
 
   const isAddMenuOpen = Boolean(addMenuAnchorEl);
   const isAccountMenuOpen = Boolean(accountMenuAnchorEl);
@@ -131,13 +142,15 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     setMobileMenuAnchorEl(null);
   };
 
-  const handleDialogOpen = (type: DialogType) => {
-    setDialogType(type);
+  // Open dialogs and close menu
+  const openJoinDialog = () => {
+    onOpenJoinModal();
     handleAddMenuClose();
   };
 
-  const handleDialogClose = () => {
-    setDialogType(null);
+  const openCreateDialog = () => {
+    onOpenCreateModal();
+    handleAddMenuClose();
   };
 
   const handleLogout = async () => {
@@ -181,7 +194,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
           </Typography>
 
           {/* Breadcrumbs */}
-          {breadcrumbs}
+          {/* {breadcrumbs} */}
 
           <Box sx={{ flexGrow: 1 }} />
 
@@ -206,23 +219,29 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                   onClose={handleAddMenuClose}
                   PaperProps={{ style: { width: 200 } }}
                 >
-                  <MenuItem onClick={() => handleDialogOpen("join")}>
-                    Join a Class
-                  </MenuItem>
-                  <MenuItem onClick={() => handleDialogOpen("create")}>
+                  <MenuItem onClick={openJoinDialog}>Join a Class</MenuItem>
+                  <MenuItem onClick={openCreateDialog}>
                     Create a New Class
                   </MenuItem>
                 </Menu>
 
                 {/* Mail */}
-                <IconButton size="large" color="inherit" aria-label="mail">
-                  <Badge badgeContent={4} color="error">
+                <IconButton
+                  component={RouterLink}
+                  to="/inbox"
+                  size="large"
+                  color="inherit"
+                  aria-label="mail"
+                >
+                  <Badge badgeContent={17} color="error">
                     <MailIcon />
                   </Badge>
                 </IconButton>
 
                 {/* Notifications */}
                 <IconButton
+                  component={RouterLink}
+                  to="/notification"
                   size="large"
                   color="inherit"
                   aria-label="notifications"
@@ -322,11 +341,14 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       {/* Dialog Components */}
       <JoinClassDialog
         open={dialogType === "join"}
-        onClose={handleDialogClose}
+        onClose={onDialogClose}
+        onJoinSuccess={onJoinSuccess}
       />
       <CreateClassDialog
         open={dialogType === "create"}
-        onClose={handleDialogClose}
+        onClose={onDialogClose}
+        onCreateSuccess={onCreateSuccess}
+        createdBy={user?.id}
       />
     </Box>
   );

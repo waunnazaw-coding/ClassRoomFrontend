@@ -32,7 +32,9 @@ const ClassDetailPage = lazy(() => import("../pages/classes/ClassDetial"));
 const NotificationPage = lazy(
   () => import("../pages/notification/Notification"),
 );
-const AssignmentDetail = lazy(() => import("../pages/assignments/Assignment"));
+const AssignmentDetail = lazy(
+  () => import("@/pages/assignments/AssignmentDetail"),
+);
 const InboxPage = lazy(() => import("../pages/inbox/Inbox"));
 const LoginPage = lazy(() => import("../pages/auth/SigIn"));
 const SignUpPage = lazy(() => import("../pages/auth/SignUp"));
@@ -81,18 +83,17 @@ const router = createBrowserRouter([
               {
                 path: ":classId",
                 element: withSuspense(<ClassDetailPage />),
-                children: [
-                  {
-                    path: "assignment/:assignmentId",
-                    element: withSuspense(<AssignmentDetail />),
-                  },
-                  {
-                    path: "material/:materialId",
-                    element: withSuspense(<AssignmentDetail />),
-                  },
-                ],
+                // children: [],
               },
             ],
+          },
+          {
+            path: "classes/:classId/assignment/:assignmentId",
+            element: withSuspense(<AssignmentDetail />),
+          },
+          {
+            path: "classes/:classId/material/:materialId",
+            element: withSuspense(<AssignmentDetail />),
           },
           {
             path: "todo",
@@ -120,10 +121,10 @@ const router = createBrowserRouter([
   },
 
   // // Catch-all redirect to home
-  {
-    path: "*",
-    element: <Navigate to="/" replace />,
-  },
+  // {
+  //   path: "*",
+  //   element: <Navigate to="/" replace />,
+  // },
 ]);
 
 export default router;

@@ -22,11 +22,12 @@ import TopicIcon from "@mui/icons-material/Topic";
 import InstructionCard from "../assignments/InstructionCard";
 
 interface ClassWorkProps {
-  role: string; // expected values: "teacher", "subteacher", "student", etc.
-  userId: number; // needed for TopicDialog
+  role: string;
+  classId: number;
+  userId: number;
 }
 
-export default function ClassWork({ role, userId }: ClassWorkProps) {
+export default function ClassWork({ role, userId, classId }: ClassWorkProps) {
   const [assignmentOpen, setAssignmentOpen] = React.useState(false);
   const [materialOpen, setMaterialOpen] = React.useState(false);
   const [topicOpen, setTopicOpen] = React.useState(false);
@@ -164,6 +165,7 @@ export default function ClassWork({ role, userId }: ClassWorkProps) {
       <AssignmentDialog
         open={assignmentOpen}
         onClose={() => setAssignmentOpen(false)}
+        classId={classId}
       />
       <MaterialDialog
         open={materialOpen}

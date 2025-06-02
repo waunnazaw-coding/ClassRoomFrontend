@@ -19,22 +19,16 @@ import {
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
 import { generateColorScheme } from "../layout/generateColorSheme";
-import EditClassModal from "./EditClassForm";
+import { restoreClass, actualDeleteClass } from "../../services/classes";
 import { ClassResponseDto } from "../../types/index";
 import { useAuth } from "../../contexts/AuthContext";
 
 interface ClassCardProps {
-  classes: ClassResponseDto[];
-  setClasses: React.Dispatch<React.SetStateAction<ClassResponseDto[]>>;
-  onUpdateClass: (
-    id: number,
-    updatedData: Partial<ClassResponseDto>,
-  ) => Promise<void>;
-  onDeleteClass: (id: number) => Promise<void>;
-  onUnenrollClass: (id: number) => Promise<void>;
+  archivedClasses: ClassResponseDto[];
+  onRemoveClass: (id: number) => void;
 }
 
 const randomImages = [
@@ -45,81 +39,80 @@ const randomImages = [
   "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQTOysRYoTP-M-o917gIkUqbiKCJibwLOfIng&s",
 ];
 
-export default function ClassCard({
-  classes,
-  setClasses,
-  onUpdateClass,
-  onDeleteClass,
-  onUnenrollClass,
+export default function ArchivedClassCard({
+  archivedClasses,
+  onRemoveClass,
 }: ClassCardProps) {
   const { user } = useAuth();
 
-  const [editOpen, setEditOpen] = useState(false);
-  const [editClass, setEditClass] = useState<ClassResponseDto | null>(null);
+  // Initialize local state with archivedClasses prop
+  const [classes, setClasses] = useState<ClassResponseDto[]>(archivedClasses);
 
-  const [confirm, setConfirm] = useState<{
-    open: boolean;
-    title: string;
-    description: string;
-    onConfirm: () => void;
-    color: "error" | "success";
-    confirmText: string;
-  }>({
+  const [confirm, setConfirm] = useState({
     open: false,
     title: "",
     description: "",
     onConfirm: () => {},
-    color: "error",
-    confirmText: "Confirm",
   });
 
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [menuClass, setMenuClass] = useState<ClassResponseDto | null>(null);
 
-  const handleEditClick = (cls: ClassResponseDto) => {
-    setEditClass(cls);
-    setEditOpen(true);
-    handleMenuClose();
+  const showToast = (
+    message: string,
+    type: "success" | "error" = "success",
+  ) => {
+    toast[type](message);
   };
 
-  const handleUpdate = async (updatedData: {
-    name: string;
-    section?: string;
-    subject?: string;
-    room?: string;
-  }) => {
-    if (!editClass) return;
-    await onUpdateClass(editClass.id, updatedData);
-    setEditOpen(false);
-    setEditClass(null);
+  const handleRestoreClick = (cls: ClassResponseDto) => {
+    setConfirm({
+      open: true,
+      title: "Restore Class",
+      description: `Are you sure you want to restore class "${cls.name}"?`,
+      onConfirm: async () => {
+        try {
+          await restoreClass(cls.id);
+          showToast("Class restored successfully.");
+          // Remove restored class from archived list
+          setClasses((prev) => prev.filter((c) => c.id !== cls.id));
+          onRemoveClass(cls.id);
+          setConfirm((prev) => ({ ...prev, open: false }));
+        } catch (error: any) {
+          showToast(
+            error.response?.data?.message || "Failed to restore class",
+            "error",
+          );
+          setConfirm((prev) => ({ ...prev, open: false }));
+        }
+      },
+    });
+    handleMenuClose();
   };
 
   const handleDeleteClick = (cls: ClassResponseDto) => {
     setConfirm({
       open: true,
       title: "Delete Class",
-      description: `Are you sure you want to delete class "${cls.name}"? This action cannot be undone.`,
+      description: `Are you sure you want to permanently delete class "${cls.name}"? This action cannot be undone.`,
       onConfirm: async () => {
-        await onDeleteClass(cls.id);
-        setConfirm((prev) => ({ ...prev, open: false }));
-      },
-      color: "error",
-      confirmText: "Delete",
-    });
-    handleMenuClose();
-  };
+        const originalClasses = [...classes];
+        setClasses((prev) => prev.filter((c) => c.id !== cls.id));
 
-  const handleUnenrollClick = (cls: ClassResponseDto) => {
-    setConfirm({
-      open: true,
-      title: "Leave Class",
-      description: `Are you sure you want to leave class "${cls.name}"?`,
-      onConfirm: async () => {
-        await onUnenrollClass(cls.id);
-        setConfirm((prev) => ({ ...prev, open: false }));
+        try {
+          await actualDeleteClass(cls.id);
+          showToast("Class Actual deleted.");
+          onRemoveClass(cls.id);
+        } catch (error: any) {
+          setClasses(originalClasses);
+          showToast(
+            error.response?.data?.message || "Failed to delete class",
+            "error",
+          );
+        } finally {
+          setConfirm((prev) => ({ ...prev, open: false }));
+        }
       },
-      color: "success",
-      confirmText: "Leave",
     });
     handleMenuClose();
   };
@@ -141,6 +134,7 @@ export default function ClassCard({
     <>
       <Box
         sx={{
+          p: 4,
           width: "100%",
           display: "grid",
           gridTemplateColumns:
@@ -188,25 +182,15 @@ export default function ClassCard({
                   anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                   transformOrigin={{ vertical: "top", horizontal: "right" }}
                 >
-                  {(cls.role === "Teacher" || cls.role === "SubTeacher") && (
-                    <Box>
-                      <MenuItem onClick={() => handleEditClick(cls)}>
-                        <EditIcon sx={{ mr: 1 }} fontSize="small" /> Edit
-                      </MenuItem>
-                      <MenuItem
-                        onClick={() => handleDeleteClick(cls)}
-                        sx={{ color: "error.main" }}
-                      >
-                        <DeleteForeverIcon sx={{ mr: 1 }} fontSize="small" />{" "}
-                        Delete
-                      </MenuItem>
-                    </Box>
-                  )}
-                  {cls.role === "Student" && (
-                    <MenuItem onClick={() => handleUnenrollClick(cls)}>
-                      <ExitToAppIcon sx={{ mr: 1 }} fontSize="small" /> Leave
-                    </MenuItem>
-                  )}
+                  <MenuItem onClick={() => handleRestoreClick(cls)}>
+                    <EditIcon sx={{ mr: 1 }} fontSize="small" /> Restore
+                  </MenuItem>
+                  <MenuItem
+                    onClick={() => handleDeleteClick(cls)}
+                    sx={{ color: "error.main" }}
+                  >
+                    <DeleteForeverIcon sx={{ mr: 1 }} fontSize="small" /> Delete
+                  </MenuItem>
                 </Menu>
 
                 <Link
@@ -230,28 +214,6 @@ export default function ClassCard({
                       filter: "brightness(0.92)",
                     }}
                   />
-
-                  {cls.role === "Student" && (
-                    <Avatar
-                      alt={cls.name}
-                      sx={{
-                        width: 56,
-                        height: 56,
-                        position: "absolute",
-                        top: 110,
-                        right: 20,
-                        border: "3px solid #fff",
-                        boxShadow: 3,
-                        bgcolor: baseColor,
-                        color: "#fff",
-                        fontWeight: 700,
-                        fontSize: "1.5rem",
-                        userSelect: "none",
-                      }}
-                    >
-                      {cls.name.charAt(0).toUpperCase()}
-                    </Avatar>
-                  )}
 
                   <CardContent sx={{ pt: 4, pb: 2 }}>
                     <Typography variant="h6" fontWeight={700} gutterBottom>
@@ -279,20 +241,6 @@ export default function ClassCard({
         })}
       </Box>
 
-      {editClass && (
-        <EditClassModal
-          open={editOpen}
-          onClose={() => setEditOpen(false)}
-          onUpdate={handleUpdate}
-          initialData={{
-            name: editClass.name,
-            section: editClass.section,
-            subject: editClass.subject,
-            room: editClass.room,
-          }}
-        />
-      )}
-
       <Dialog
         open={confirm.open}
         onClose={() => setConfirm((prev) => ({ ...prev, open: false }))}
@@ -308,11 +256,17 @@ export default function ClassCard({
             Cancel
           </Button>
           <Button
-            color={confirm.color}
             variant="contained"
+            color={
+              confirm.title.toLowerCase().includes("restore")
+                ? "success"
+                : "error"
+            }
             onClick={confirm.onConfirm}
           >
-            {confirm.confirmText}
+            {confirm.title.toLowerCase().includes("restore")
+              ? "Restore"
+              : "Confirm"}
           </Button>
         </DialogActions>
       </Dialog>

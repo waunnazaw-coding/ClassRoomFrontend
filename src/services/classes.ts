@@ -14,7 +14,7 @@ export async function createClass(
   data: ClassRequestDto,
 ): Promise<ClassResponseDto> {
   const response = await axiosInstance.post("/classes", data);
-  return response.data;
+  return response.data.data;
 }
 
 // Define the ApiResponse interface matching backend structure
@@ -100,7 +100,7 @@ export async function updateClass(
   data: ClassUpdateRequestDto,
 ): Promise<ClassResponseDto> {
   const response = await axiosInstance.put(`/classes/${id}`, data);
-  return response.data;
+  return response.data.data;
 }
 
 // Soft delete class (mark as deleted)
@@ -133,7 +133,15 @@ export async function getClassParticipants(
   classId: number,
 ): Promise<UserDto[]> {
   const response = await axiosInstance.get(`/classes/${classId}/participants`);
-  return response.data;
+  // Map API response to UserDto shape
+  const mappedUsers: UserDto[] = response.data.map((user: any) => ({
+    id: user.userId,
+    name: user.userName,
+    email: user.email,
+    role: user.role,
+    profilePicture: user.profilePicture ?? null, // if available, else null
+  }));
+  return mappedUsers;
 }
 
 // Get topics with materials and assignments for a class

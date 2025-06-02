@@ -84,14 +84,14 @@ export default function SignUpCard() {
 
     try {
       await authService.register({
-        username: data.name,
+        name: data.name,
         email: data.email,
         password: data.password,
       });
 
       setSuccess(true);
       reset();
-      navigate("/");
+      navigate("/login");
     } catch (err: any) {
       const message =
         err?.response?.data?.message || err.message || "Registration failed";

@@ -67,8 +67,15 @@ const CreateClassDialog: React.FC<CreateClassDialogProps> = ({
       };
 
       const newClass = await createClass(payload);
-      toast.success(`Class "${newClass.name}" created successfully.`);
-      onCreateSuccess(newClass);
+
+      console.log("New Class Created:", newClass);
+
+      const classData = newClass;
+
+      toast.success(
+        `Class "${classData?.name || "Untitled"}" created successfully.`,
+      );
+      onCreateSuccess(classData); // Pass the freshly created class directly
       reset();
       onClose();
     } catch (error: any) {

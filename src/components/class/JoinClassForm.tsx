@@ -48,6 +48,7 @@ const JoinClassDialog: React.FC<JoinClassDialogProps> = ({
     setLoading(true);
     try {
       const res = await enrollInClass(classCode.trim(), user.id);
+      console.log("Enrollment response:", res);
       toast.success(res.message || "Successfully joined the class.");
       setClassCode("");
       onJoinSuccess(); // Notify parent to refresh classes

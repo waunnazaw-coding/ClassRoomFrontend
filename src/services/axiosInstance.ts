@@ -14,7 +14,7 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers = config.headers || {};
     config.headers["Authorization"] = `Bearer ${token}`;
-    console.log("Sending request with token:", token);
+    console.log("authorization header set with token:", token);
   } else {
     console.log("No token found in localStorage");
     if (config.headers) {
@@ -48,7 +48,7 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;

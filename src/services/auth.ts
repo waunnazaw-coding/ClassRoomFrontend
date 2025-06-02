@@ -1,7 +1,7 @@
 import api from "./axiosInstance";
 
 interface RegisterData {
-  username: string;
+  name: string;
   email: string;
   password: string;
   // Add any other fields required by your API

@@ -18,53 +18,72 @@ import AddStudentForm from "./AddStudentForm";
 import AddSubTeacherForm from "./AddSubTeacherForm";
 import ConfirmDialog from "../common/ConfirmDialog";
 import textColor from "../common/CreateTheme";
+import {
+  removeStudentFromClass,
+  removeSubTeacherFromClass,
+  transferClassOwnership,
+} from "@/services/classes";
 
-const teachers = [
-  {
-    id: 1,
-    name: "Alice Johnson",
-    avatarUrl: "https://i.pravatar.cc/150?img=47",
-  },
-  { id: 2, name: "Bob Smith", avatarUrl: "https://i.pravatar.cc/150?img=12" },
-  { id: 3, name: "Carol White", avatarUrl: "https://i.pravatar.cc/150?img=5" },
-];
+// const teachers = [
+//   {
+//     id: 1,
+//     name: "Alice Johnson",
+//     avatarUrl: "https://i.pravatar.cc/150?img=47",
+//   },
+//   { id: 2, name: "Bob Smith", avatarUrl: "https://i.pravatar.cc/150?img=12" },
+//   { id: 3, name: "Carol White", avatarUrl: "https://i.pravatar.cc/150?img=5" },
+// ];
 
-const students = [
-  { id: 1, name: "David Lee", avatarUrl: "https://i.pravatar.cc/150?img=65" },
-  { id: 2, name: "Eva Green", avatarUrl: "https://i.pravatar.cc/150?img=15" },
-  {
-    id: 3,
-    name: "Frank Harris",
-    avatarUrl: "https://i.pravatar.cc/150?img=25",
-  },
-  { id: 4, name: "Grace Kim", avatarUrl: "https://i.pravatar.cc/150?img=32" },
-  { id: 5, name: "David Lee", avatarUrl: "https://i.pravatar.cc/150?img=65" },
-  { id: 6, name: "Eva Green", avatarUrl: "https://i.pravatar.cc/150?img=15" },
-  {
-    id: 7,
-    name: "Frank Harris",
-    avatarUrl: "https://i.pravatar.cc/150?img=25",
-  },
-  { id: 8, name: "Grace Kim", avatarUrl: "https://i.pravatar.cc/150?img=32" },
-  { id: 9, name: "David Lee", avatarUrl: "https://i.pravatar.cc/150?img=65" },
-  { id: 10, name: "Eva Green", avatarUrl: "https://i.pravatar.cc/150?img=15" },
-  {
-    id: 11,
-    name: "Frank Harris",
-    avatarUrl: "https://i.pravatar.cc/150?img=25",
-  },
-  { id: 12, name: "Grace Kim", avatarUrl: "https://i.pravatar.cc/150?img=32" },
-  { id: 13, name: "David Lee", avatarUrl: "https://i.pravatar.cc/150?img=65" },
-  { id: 14, name: "Eva Green", avatarUrl: "https://i.pravatar.cc/150?img=15" },
-  {
-    id: 15,
-    name: "Frank Harris",
-    avatarUrl: "https://i.pravatar.cc/150?img=25",
-  },
-  { id: 16, name: "Grace Kim", avatarUrl: "https://i.pravatar.cc/150?img=32" },
-];
+// const students = [
+//   { id: 1, name: "David Lee", avatarUrl: "https://i.pravatar.cc/150?img=65" },
+//   { id: 2, name: "Eva Green", avatarUrl: "https://i.pravatar.cc/150?img=15" },
+//   {
+//     id: 3,
+//     name: "Frank Harris",
+//     avatarUrl: "https://i.pravatar.cc/150?img=25",
+//   },
+//   { id: 4, name: "Grace Kim", avatarUrl: "https://i.pravatar.cc/150?img=32" },
+//   { id: 5, name: "David Lee", avatarUrl: "https://i.pravatar.cc/150?img=65" },
+//   { id: 6, name: "Eva Green", avatarUrl: "https://i.pravatar.cc/150?img=15" },
+//   {
+//     id: 7,
+//     name: "Frank Harris",
+//     avatarUrl: "https://i.pravatar.cc/150?img=25",
+//   },
+//   { id: 8, name: "Grace Kim", avatarUrl: "https://i.pravatar.cc/150?img=32" },
+//   { id: 9, name: "David Lee", avatarUrl: "https://i.pravatar.cc/150?img=65" },
+//   { id: 10, name: "Eva Green", avatarUrl: "https://i.pravatar.cc/150?img=15" },
+//   {
+//     id: 11,
+//     name: "Frank Harris",
+//     avatarUrl: "https://i.pravatar.cc/150?img=25",
+//   },
+//   { id: 12, name: "Grace Kim", avatarUrl: "https://i.pravatar.cc/150?img=32" },
+//   { id: 13, name: "David Lee", avatarUrl: "https://i.pravatar.cc/150?img=65" },
+//   { id: 14, name: "Eva Green", avatarUrl: "https://i.pravatar.cc/150?img=15" },
+//   {
+//     id: 15,
+//     name: "Frank Harris",
+//     avatarUrl: "https://i.pravatar.cc/150?img=25",
+//   },
+//   { id: 16, name: "Grace Kim", avatarUrl: "https://i.pravatar.cc/150?img=32" },
+// ];
 
-function People() {
+interface Participant {
+  id: number;
+  userId: number;
+  name?: string;
+  role: string;
+  avatarUrl?: string;
+}
+
+interface PeopleProps {
+  participants: Participant[];
+  currentUserId: number;
+  classId: number;
+}
+
+export default function People(props: PeopleProps) {
   const [studentOpen, setStudent] = React.useState(false);
   const [subTeacherOpen, setSubTeacher] = React.useState(false);
 
@@ -84,6 +103,11 @@ function People() {
     userId: null,
     userType: null,
   });
+
+  const teachers = props.participants.filter((p) =>
+    ["Teacher", "SubTeacher"].includes(p.role),
+  );
+  const students = props.participants.filter((p) => p.role === "Student");
 
   const handleMenuOpen = (
     event: React.MouseEvent<HTMLElement>,
@@ -115,10 +139,9 @@ function People() {
     setConfirmOpen(true);
   };
 
-  // Handle confirm dialog action
   const handleConfirm = () => {
     // Here you can add your logic for remove, transfer, email, etc.
-    alert(`Confirmed ${confirmAction} action for ${confirmUserName}`);
+    // alert(`Confirmed ${confirmAction} action for ${confirmUserName}`);
 
     setConfirmOpen(false);
   };
@@ -165,7 +188,7 @@ function People() {
         <Divider sx={{ mb: 2 }} />
         <Paper elevation={0} sx={{ p: 1 }}>
           <Stack spacing={1} divider={<Divider flexItem />}>
-            {teachers.map(({ id, name, avatarUrl }) => (
+            {teachers.map(({ id, name, avatarUrl, role }) => (
               <Stack
                 key={id}
                 direction="row"
@@ -181,53 +204,90 @@ function People() {
                   />
                   <Typography variant="body1">{name}</Typography>
                 </Stack>
-                <Button
-                  sx={{ color: textColor }}
-                  aria-controls={
-                    menuState.userType === "teacher" && menuState.userId === id
-                      ? `teacher-menu-${id}`
-                      : undefined
-                  }
-                  aria-haspopup="true"
-                  aria-expanded={
-                    menuState.userType === "teacher" && menuState.userId === id
-                      ? "true"
-                      : undefined
-                  }
-                  onClick={(e) => handleMenuOpen(e, id, "teacher")}
-                >
-                  <MoreVertIcon />
-                </Button>
+                {/* Only show these menu items for sub teachers */}
+                {role === "SubTeacher" && (
+                  <>
+                    <Button
+                      sx={{ color: textColor }}
+                      aria-controls={
+                        menuState.userType === "teacher" &&
+                        menuState.userId === id
+                          ? `teacher-menu-${id}`
+                          : undefined
+                      }
+                      aria-haspopup="true"
+                      aria-expanded={
+                        menuState.userType === "teacher" &&
+                        menuState.userId === id
+                          ? "true"
+                          : undefined
+                      }
+                      onClick={(e) => handleMenuOpen(e, id, "teacher")}
+                    >
+                      <MoreVertIcon />
+                    </Button>
 
-                <Menu
-                  id={`teacher-menu-${id}`}
-                  anchorEl={menuState.anchorEl}
-                  open={
-                    menuState.userType === "teacher" && menuState.userId === id
-                  }
-                  onClose={handleMenuClose}
-                  TransitionComponent={Fade}
-                  MenuListProps={{
-                    "aria-labelledby": `teacher-menu-button-${id}`,
-                  }}
-                >
-                  <MenuItem
-                    onClick={() => {
-                      handleMenuClose();
-                      openConfirmDialog(name, "transfer");
-                    }}
-                  >
-                    Transfer Ownership
-                  </MenuItem>
-                  <MenuItem
-                    onClick={() => {
-                      handleMenuClose();
-                      openConfirmDialog(name, "remove");
-                    }}
-                  >
-                    Remove
-                  </MenuItem>
-                </Menu>
+                    <Menu
+                      id={`teacher-menu-${id}`}
+                      anchorEl={menuState.anchorEl}
+                      open={
+                        menuState.userType === "teacher" &&
+                        menuState.userId === id
+                      }
+                      onClose={handleMenuClose}
+                      TransitionComponent={Fade}
+                      MenuListProps={{
+                        "aria-labelledby": `teacher-menu-button-${id}`,
+                      }}
+                    >
+                      <MenuItem
+                        onClick={async () => {
+                          handleMenuClose();
+                          openConfirmDialog(name ?? "", "transfer");
+                          try {
+                            // Call the API to transfer ownership
+                            await transferClassOwnership(
+                              props.classId,
+                              props.currentUserId,
+                              id,
+                            );
+
+                            alert(`Ownership transferred to ${name}`);
+
+                            setConfirmOpen(false);
+                          } catch (error) {
+                            alert("Failed to transfer ownership.");
+                          }
+                        }}
+                      >
+                        Transfer Ownership
+                      </MenuItem>
+                      <MenuItem
+                        onClick={() => {
+                          handleMenuClose();
+                          openConfirmDialog(name ?? "", "remove");
+                          async () => {
+                            try {
+                              // Call the API to transfer ownership
+                              await removeSubTeacherFromClass(
+                                props.classId,
+                                id,
+                              );
+
+                              alert(`Leave Successfully.`);
+
+                              setConfirmOpen(false);
+                            } catch (error: any) {
+                              setConfirmOpen(false);
+                            }
+                          };
+                        }}
+                      >
+                        Remove
+                      </MenuItem>
+                    </Menu>
+                  </>
+                )}
               </Stack>
             ))}
           </Stack>
@@ -309,7 +369,7 @@ function People() {
                   <MenuItem
                     onClick={() => {
                       handleMenuClose();
-                      openConfirmDialog(name, "email");
+                      openConfirmDialog(name ?? "", "email");
                     }}
                   >
                     Email
@@ -317,7 +377,18 @@ function People() {
                   <MenuItem
                     onClick={() => {
                       handleMenuClose();
-                      openConfirmDialog(name, "remove");
+                      openConfirmDialog(name ?? "", "remove");
+                      async () => {
+                        try {
+                          await removeStudentFromClass(props.classId, id);
+
+                          alert(`Successfully removed ${props.classId} ${id}.`);
+
+                          setConfirmOpen(false);
+                        } catch (error: any) {
+                          setConfirmOpen(false);
+                        }
+                      };
                     }}
                   >
                     Remove
@@ -345,5 +416,3 @@ function People() {
     </Box>
   );
 }
-
-export default People;

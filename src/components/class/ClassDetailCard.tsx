@@ -9,7 +9,7 @@ import ClassWork from "./ClassWork";
 import People from "./People";
 import Grade from "./Grade";
 import { useEffect, useState } from "react";
-import { getClassById } from "../../services/classes";
+import { getClassById, getClassParticipants } from "../../services/classes";
 import { getRole } from "@/services/classes";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -17,10 +17,10 @@ import { useNavigate } from "react-router-dom";
 function ClassDetailCard({ classId }: { classId: string | number }) {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-
   const [value, setValue] = React.useState("1");
   const [classDetail, setClassDetail] = useState<any>(null);
   const [role, setRole] = useState<string | null>(null);
+  const [participants, setParticipants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,6 +43,8 @@ function ClassDetailCard({ classId }: { classId: string | number }) {
         const classData = await getClassById(classIdNum);
         if (!isMounted) return;
         setClassDetail(classData);
+        const participantsData = await getClassParticipants(classIdNum);
+        if (isMounted) setParticipants(participantsData);
 
         // Fetch user role in class
         if (!user) {
@@ -148,12 +150,20 @@ function ClassDetailCard({ classId }: { classId: string | number }) {
           )}
           {value === "2" && (
             <TabPanel value="2">
-              <ClassWork role={role} userId={user.id} />
+              <ClassWork
+                role={role}
+                userId={user.id}
+                classId={Number(classId)}
+              />
             </TabPanel>
           )}
           {value === "3" && (
             <TabPanel value="3">
-              <People />
+              <People
+                participants={participants}
+                currentUserId={Number(user?.id)}
+                classId={classDetail.id}
+              />
             </TabPanel>
           )}
           {(isTeacher || isSubTeacher) && value === "4" && (

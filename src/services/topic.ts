@@ -10,7 +10,9 @@ export async function createTopic(
 
 export async function getAllTopics(classId: number): Promise<TopicDto[]> {
   const response = await axiosInstance.get<TopicDto[]>("/topics", {
-    params: { classId },
+    params: { classId }, // sends ?classId=123 as query param
   });
+  console.log(response.data);
+
   return response.data;
 }

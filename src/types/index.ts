@@ -32,9 +32,9 @@ export interface ClassUpdateRequestDto {
 export interface ClassResponseDto {
   id: number;
   name: string;
-  section: string;
-  classCode: string;
-  subject: string;
+  section?: string;
+  classCode?: string;
+  subject?: string;
   role: string;
   isDeleted: boolean;
   room: string;
@@ -103,7 +103,7 @@ export interface CreateTopicDto {
 export interface TopicDto {
   id: number;
   title: string;
-  userId: number;
+  // userId: number;
   createdAt?: string; // ISO string format
 }
 
@@ -119,4 +119,9 @@ export interface UserDto {
   email: string;
   role: string;
   profilePicture?: string | null;
+}
+
+export interface StudentDto {
+  userId: number;
+  userName: string;
 }

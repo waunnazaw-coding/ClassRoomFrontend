@@ -39,6 +39,8 @@ const InboxPage = lazy(() => import("../pages/inbox/Inbox"));
 const LoginPage = lazy(() => import("../pages/auth/SigIn"));
 const SignUpPage = lazy(() => import("../pages/auth/SignUp"));
 
+const accessToken = localStorage.getItem("authToken") || "";
+
 const router = createBrowserRouter([
   // Root layout with public home page and error page
   {
@@ -105,7 +107,7 @@ const router = createBrowserRouter([
           },
           {
             path: "notification",
-            element: withSuspense(<NotificationPage />),
+            element: withSuspense(<NotificationPage token={accessToken} />),
           },
           {
             path: "archived",

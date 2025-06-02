@@ -165,7 +165,7 @@ const Header: React.FC<HeaderProps> = ({
         color="default"
         sx={{
           bgcolor: "white",
-          boxShadow: 2,
+          boxShadow: 1,
           color: textColor,
           zIndex: (theme) => theme.zIndex.drawer + 1,
         }}

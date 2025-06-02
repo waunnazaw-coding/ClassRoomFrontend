@@ -1,12 +1,17 @@
-// pages/Home.tsx
 import React, { useEffect, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import ClassCard from "../components/class/ClassCard";
 import { ClassResponseDto } from "../types";
 import { useAuth } from "@/contexts/AuthContext";
-import { getClassesByUserId } from "@/services/classes";
+import {
+  getClassesByUserId,
+  updateClass,
+  deleteClass,
+  unenrollFromClass,
+} from "@/services/classes";
 import SchoolIcon from "@mui/icons-material/School";
 import Header from "../components/layout/Header";
+import { toast } from "react-toastify";
 
 export default function Home() {
   const { user } = useAuth();
@@ -54,6 +59,59 @@ export default function Home() {
     closeModal();
   };
 
+  // Unified update handler for edit/leave/delete
+  const handleUpdateClass = async (
+    id: number,
+    updatedData: Partial<ClassResponseDto>,
+  ) => {
+    try {
+      // Find the original class to fill in required fields if missing
+      const originalClass = classes.find((cls) => cls.id === id);
+      if (!originalClass) throw new Error("Class not found.");
+
+      // Ensure required fields for ClassUpdateRequestDto are present
+      const updatePayload = {
+        name: updatedData.name ?? originalClass.name,
+        section: updatedData.section ?? originalClass.section,
+        subject: updatedData.subject ?? originalClass.subject,
+        room: updatedData.room ?? originalClass.room,
+        // Add other required fields here if needed
+      };
+
+      const updatedClass = await updateClass(id, updatePayload);
+      console.log("Updated class from API:", updatedClass);
+      console.log("Looking for id:", id);
+      setClasses((prev) =>
+        prev.map((cls) => (cls.id === updatedClass.id ? updatedClass : cls)),
+      );
+      //fetchClasses(); // Refresh classes to ensure data consistency
+      toast.success("Class updated successfully.");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to update class");
+    }
+  };
+
+  const handleDeleteClass = async (id: number) => {
+    try {
+      await deleteClass(id);
+      setClasses((prev) => prev.filter((cls) => cls.id !== id));
+      toast.success("Class deleted successfully.");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to delete class");
+    }
+  };
+
+  const handleUnenrollClass = async (classId: number) => {
+    try {
+      if (!user) throw new Error("User is not authenticated.");
+      await unenrollFromClass(classId, Number(user.id));
+      setClasses((prev) => prev.filter((cls) => cls.id !== classId));
+      toast.success("You have left the class.");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to leave class");
+    }
+  };
+
   return (
     <Box sx={{ width: "100%", p: 6, minHeight: "100vh" }}>
       <Header
@@ -91,7 +149,13 @@ export default function Home() {
           </Typography>
         </Box>
       ) : (
-        <ClassCard classes={classes} setClasses={setClasses} />
+        <ClassCard
+          classes={classes}
+          setClasses={setClasses}
+          onUpdateClass={handleUpdateClass}
+          onDeleteClass={handleDeleteClass}
+          onUnenrollClass={handleUnenrollClass}
+        />
       )}
     </Box>
   );

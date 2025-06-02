@@ -1,51 +1,54 @@
-import * as React from "react";
-import Box from "@mui/material/Box";
-import Tab from "@mui/material/Tab";
-import TabContext from "@mui/lab/TabContext";
-import TabList from "@mui/lab/TabList";
-import TabPanel from "@mui/lab/TabPanel";
+import React, { useEffect, useState } from "react";
+import NotificationService from "./notificationService";
 
-function ToDo() {
-  const [value, setValue] = React.useState("1");
-
-  const handleChange = (event: React.SyntheticEvent, newValue: string) => {
-    setValue(newValue);
-  };
-
-  return (
-    <Box
-      sx={{
-        width: "100%",
-        bgcolor: "background.paper",
-        typography: "body1",
-        minHeight: "100vh",
-      }}
-    >
-      <TabContext value={value}>
-        <Box
-          sx={{
-            borderBottom: 2,
-            borderColor: "divider",
-            position: "fixed",
-            width: "100%",
-            zIndex: 1,
-            backgroundColor: "background.paper",
-          }}
-        >
-          <TabList onChange={handleChange} aria-label="lab API tabs example">
-            <Tab label="No Read" value="1" />
-            <Tab label="Read" value="2" />
-          </TabList>
-        </Box>
-        <TabPanel value="1">
-          <Box sx={{ p: 6 }}>No Read</Box>
-        </TabPanel>
-        <TabPanel value="2">
-          <Box sx={{ p: 6 }}>Read</Box>
-        </TabPanel>
-      </TabContext>
-    </Box>
-  );
+interface Notification {
+  Title?: string;
+  Message: string;
+  AssignmentId?: number;
+  ClassName?: string;
+  DueDate?: string;
 }
 
-export default ToDo;
+interface Props {
+  token: string;
+}
+
+const NotificationsComponent: React.FC<Props> = ({ token }) => {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notificationService, setNotificationService] =
+    useState<NotificationService | null>(null);
+
+  useEffect(() => {
+    const service = new NotificationService(token);
+    setNotificationService(service);
+
+    service.startConnection().then(() => {
+      service.onReceiveNotification((notification: Notification) => {
+        setNotifications((prev) => [notification, ...prev]);
+        console.log("New notification received:", notification);
+      });
+    });
+
+    return () => {
+      service.stopConnection();
+    };
+  }, [token]);
+
+  return (
+    <div>
+      <h2>Notifications</h2>
+      {notifications.length === 0 && <p>No notifications yet.</p>}
+      <ul>
+        {notifications.map((n, idx) => (
+          <li key={idx}>
+            {n.Title && <strong>{n.Title} - </strong>}
+            {n.Message} {n.AssignmentId && `(Assignment ID: ${n.AssignmentId})`}{" "}
+            {n.DueDate && `(Due: ${n.DueDate})`}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default NotificationsComponent;

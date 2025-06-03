@@ -5,11 +5,13 @@ import {
 } from "@microsoft/signalr";
 
 export interface NotificationPayload {
+  Type: string;
   Title?: string;
-  ClassName?: string;
-  AssignmentId?: number;
-  DueDate?: string;
   Message: string;
+  ClassName?: string;
+  EntityId?: number;
+  DueDate?: string;
+  AdditionalData?: { [key: string]: any };
 }
 
 type NotificationCallback = (notification: NotificationPayload) => void;

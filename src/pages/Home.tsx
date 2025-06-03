@@ -84,7 +84,7 @@ export default function Home() {
       setClasses((prev) =>
         prev.map((cls) => (cls.id === updatedClass.id ? updatedClass : cls)),
       );
-      //fetchClasses(); // Refresh classes to ensure data consistency
+      //fetchClasses(); // Refresh classes 
       toast.success("Class updated successfully.");
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Failed to update class");
